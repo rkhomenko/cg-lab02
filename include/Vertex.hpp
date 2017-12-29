@@ -6,13 +6,11 @@
 #ifndef CG_LAB_VERTEX_HPP_
 #define CG_LAB_VERTEX_HPP_
 
-#include <Matrix.hpp>
-
-using Matrix4x4 = Matrix<float, 4, 4>;
+#include <QVector4D>
 
 class Vertex {
 public:
-    using PositionType = Matrix<float, 1, 4>;
+    using PositionType = QVector4D;
     using ReferencePositionType = PositionType&;
     using ConstReferencePositionType = const PositionType&;
 
@@ -27,10 +25,6 @@ public:
         : Position{x, y, z, h} {}
     constexpr Vertex(ConstReferencePositionType position)
         : Position{position} {}
-
-    constexpr Vertex operator*(const Matrix4x4& matrix) const {
-        return Position * matrix;
-    }
 
     constexpr ConstReferencePositionType GetPositon() const { return Position; }
 

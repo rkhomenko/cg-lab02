@@ -5,7 +5,8 @@
 
 #version 330
 attribute highp vec4 position;
+uniform highp mat4x4 transformMatrix;
 
 void main() {
-  gl_Position = position;
+  gl_Position = position * transformMatrix;
 }

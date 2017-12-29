@@ -4,8 +4,8 @@
 // All rights reserved
 
 #version 330
-uniform highp vec4 BlueColor = vec4(0.0, 0.0, 1.0, 1.0);
+uniform lowp vec4 color;
 
 void main() {
-   gl_FragColor = BlueColor;
+   gl_FragColor = color;
 }

@@ -44,7 +44,7 @@ void MyOpenGLWidget::initializeGL() {
     Buffer = new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
     Buffer->create();
     Buffer->bind();
-    Buffer->setUsagePattern(QOpenGLBuffer::DynamicDraw);
+    Buffer->setUsagePattern(QOpenGLBuffer::StaticDraw);
     Buffer->allocate(POINTS.data(), sizeof(Vertex) * POINTS.size());
 
     VertexArray = new QOpenGLVertexArrayObject;
@@ -56,6 +56,9 @@ void MyOpenGLWidget::initializeGL() {
     ShaderProgram->setAttributeBuffer(posAttr, GL_FLOAT, Vertex::GetOffset(),
                                       Vertex::GetTupleSize(),
                                       Vertex::GetStride());
+    auto color = QVector4D(0.0f, 0.0f, 1.0f, 1.0f);
+    ShaderProgram->bind();
+    ShaderProgram->setUniformValue("color", color);
 
     VertexArray->release();
     Buffer->release();
@@ -63,32 +66,28 @@ void MyOpenGLWidget::initializeGL() {
 }
 
 void MyOpenGLWidget::resizeGL(int width, int height) {
-    Matrix4x4 matrix = {1.0f * MyMainWindow::DEFAULT_SIZE.width() / width,
-                        0.0f,
-                        0.0f,
-                        0.0f,
-                        0.0f,  // second line
-                        1.0f * MyMainWindow::DEFAULT_SIZE.height() / height,
-                        0.0f,
-                        0.0f,
-                        0.0f,  // third line
-                        0.0f,
-                        1.0f,
-                        0.0f,
-                        0.0f,  // fours line
-                        0.0f,
-                        0.0f,
-                        1.0f};
+    const GLfloat matrixData[] = {
+        1.0f * MyMainWindow::DEFAULT_SIZE.width() / width,
+        0.0f,
+        0.0f,
+        0.0f,
+        0.0f,  // second line
+        1.0f * MyMainWindow::DEFAULT_SIZE.height() / height,
+        0.0f,
+        0.0f,
+        0.0f,  // third line
+        0.0f,
+        1.0f,
+        0.0f,
+        0.0f,  // fourth line
+        0.0f,
+        0.0f,
+        1.0f};
+    QMatrix4x4 matrix(matrixData);
 
-    // TODO: Calculate new point coordinates on GPU
-    std::vector<Vertex> newVertexes;
-    for (const auto& vertex : POINTS) {
-        newVertexes.push_back(vertex.GetPositon() * matrix);
-    }
-
-    Buffer->bind();
-    Buffer->write(0, newVertexes.data(), newVertexes.size() * sizeof(Vertex));
-    Buffer->release();
+    ShaderProgram->bind();
+    ShaderProgram->setUniformValue("transformMatrix", matrix);
+    ShaderProgram->release();
 
     repaint();
 }
