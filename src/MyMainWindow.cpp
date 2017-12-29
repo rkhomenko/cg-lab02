@@ -18,6 +18,8 @@ MyMainWindow::MyMainWindow(QWidget* parent) : QMainWindow(parent) {
     OpenGLWidget = new MyOpenGLWidget(this);
     OpenGLWidget->setFormat(format);
 
+    setMinimumSize(MINIMUM_SIZE);
+    resize(DEFAULT_SIZE);
     setCentralWidget(OpenGLWidget);
 }
 

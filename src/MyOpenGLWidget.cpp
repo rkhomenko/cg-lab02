@@ -3,11 +3,16 @@
 // Copyright © 2017-2018 Roman Khomenko (8O-308)
 // All rights reserved
 
+#include <MyMainWindow.hpp>
 #include <MyOpenGLWidget.hpp>
 #include <Vertex.hpp>
 
+#include <cstring>
+#include <vector>
+
 #include <QApplication>
 #include <QDebug>
+#include <QMatrix4x4>
 #include <QOpenGLBuffer>
 #include <QOpenGLContext>
 #include <QOpenGLShaderProgram>
@@ -15,11 +20,11 @@
 
 MyOpenGLWidget::MyOpenGLWidget(QWidget* parent) : QOpenGLWidget(parent) {}
 
-void MyOpenGLWidget::initializeGL() {
-    const Vertex points[] = {Vertex(-0.90f, -0.90f), Vertex(0.85f, -0.90f),
-                             Vertex(-0.90f, 0.85f),  Vertex(0.90f, -0.85f),
-                             Vertex(0.90f, 0.90f),   Vertex(-0.85f, 0.90f)};
+static const std::vector<Vertex> POINTS = {
+    Vertex(-0.90f, -0.90f), Vertex(0.85f, -0.90f), Vertex(-0.90f, 0.85f),
+    Vertex(0.90f, -0.85f),  Vertex(0.90f, 0.90f),  Vertex(-0.85f, 0.90f)};
 
+void MyOpenGLWidget::initializeGL() {
     initializeOpenGLFunctions();
 
     connect(context(), &QOpenGLContext::aboutToBeDestroyed, this,
@@ -36,11 +41,11 @@ void MyOpenGLWidget::initializeGL() {
         QApplication::quit();
     }
 
-    Buffer = new QOpenGLBuffer;
+    Buffer = new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
     Buffer->create();
     Buffer->bind();
-    Buffer->setUsagePattern(QOpenGLBuffer::StaticDraw);
-    Buffer->allocate(points, sizeof(points));
+    Buffer->setUsagePattern(QOpenGLBuffer::DynamicDraw);
+    Buffer->allocate(POINTS.data(), sizeof(Vertex) * POINTS.size());
 
     VertexArray = new QOpenGLVertexArrayObject;
     VertexArray->create();
@@ -57,8 +62,36 @@ void MyOpenGLWidget::initializeGL() {
     ShaderProgram->release();
 }
 
-void MyOpenGLWidget::resizeGL([[maybe_unused]] int width,
-                              [[maybe_unused]] int height) {}
+void MyOpenGLWidget::resizeGL(int width, int height) {
+    Matrix4x4 matrix = {1.0f * MyMainWindow::DEFAULT_SIZE.width() / width,
+                        0.0f,
+                        0.0f,
+                        0.0f,
+                        0.0f,  // second line
+                        1.0f * MyMainWindow::DEFAULT_SIZE.height() / height,
+                        0.0f,
+                        0.0f,
+                        0.0f,  // third line
+                        0.0f,
+                        1.0f,
+                        0.0f,
+                        0.0f,  // fours line
+                        0.0f,
+                        0.0f,
+                        1.0f};
+
+    // TODO: Calculate new point coordinates on GPU
+    std::vector<Vertex> newVertexes;
+    for (const auto& vertex : POINTS) {
+        newVertexes.push_back(vertex.GetPositon() * matrix);
+    }
+
+    Buffer->bind();
+    Buffer->write(0, newVertexes.data(), newVertexes.size() * sizeof(Vertex));
+    Buffer->release();
+
+    repaint();
+}
 
 void MyOpenGLWidget::paintGL() {
     if (!ShaderProgram->bind()) {

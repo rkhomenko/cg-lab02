@@ -1,10 +1,10 @@
-#ifndef CG_LAB_MYOPENGLWIDGET_HPP_
-#define CG_LAB_MYOPENGLWIDGET_HPP_
-
 // Computer graphic lab 2
 // Variant 20
 // Copyright © 2017-2018 Roman Khomenko (8O-308)
 // All rights reserved
+
+#ifndef CG_LAB_MYOPENGLWIDGET_HPP_
+#define CG_LAB_MYOPENGLWIDGET_HPP_
 
 #include <QOpenGLFunctions>
 #include <QOpenGLWidget>

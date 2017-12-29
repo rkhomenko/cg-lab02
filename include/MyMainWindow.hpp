@@ -17,6 +17,9 @@ public:
     MyMainWindow(QWidget* parent = nullptr);
     ~MyMainWindow();
 
+    static constexpr QSize DEFAULT_SIZE = QSize{400, 400};
+    static constexpr QSize MINIMUM_SIZE = QSize{10, 10};
+
 private:
     MyOpenGLWidget* OpenGLWidget;
 };
