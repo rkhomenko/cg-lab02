@@ -6,6 +6,8 @@
 #ifndef CG_LAB_MYOPENGLWIDGET_HPP_
 #define CG_LAB_MYOPENGLWIDGET_HPP_
 
+#include <Pyramid.hpp>
+
 #include <QOpenGLFunctions>
 #include <QOpenGLWidget>
 
@@ -31,6 +33,7 @@ private:
     QOpenGLShaderProgram* ShaderProgram;
     QOpenGLBuffer* Buffer;
     QOpenGLVertexArrayObject* VertexArray;
+    Pyramid Pyramid8Faces;
 };
 
 #endif  // CG_LAB_MYOPENGLWIDGET_HPP_

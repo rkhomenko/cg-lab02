@@ -5,7 +5,7 @@
 
 #include <MyMainWindow.hpp>
 #include <MyOpenGLWidget.hpp>
-#include <Vertex.hpp>
+#include <Pyramid.hpp>
 
 #include <cstring>
 #include <vector>
@@ -18,11 +18,8 @@
 #include <QOpenGLShaderProgram>
 #include <QOpenGLVertexArrayObject>
 
-MyOpenGLWidget::MyOpenGLWidget(QWidget* parent) : QOpenGLWidget(parent) {}
-
-static const std::vector<Vertex> POINTS = {
-    Vertex(-0.90f, -0.90f), Vertex(0.85f, -0.90f), Vertex(-0.90f, 0.85f),
-    Vertex(0.90f, -0.85f),  Vertex(0.90f, 0.90f),  Vertex(-0.85f, 0.90f)};
+MyOpenGLWidget::MyOpenGLWidget(QWidget* parent)
+    : QOpenGLWidget(parent), Pyramid8Faces{8, 0.9f, 0.9f} {}
 
 void MyOpenGLWidget::initializeGL() {
     initializeOpenGLFunctions();
@@ -45,7 +42,8 @@ void MyOpenGLWidget::initializeGL() {
     Buffer->create();
     Buffer->bind();
     Buffer->setUsagePattern(QOpenGLBuffer::StaticDraw);
-    Buffer->allocate(POINTS.data(), sizeof(Vertex) * POINTS.size());
+    Buffer->allocate(Pyramid8Faces.GetData(),
+                     sizeof(Vertex) * Pyramid8Faces.GetVerticesCount());
 
     VertexArray = new QOpenGLVertexArrayObject;
     VertexArray->create();
@@ -99,7 +97,7 @@ void MyOpenGLWidget::paintGL() {
     }
 
     VertexArray->bind();
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDrawArrays(GL_TRIANGLES, 0, Pyramid8Faces.GetVerticesCount());
     VertexArray->release();
 
     ShaderProgram->release();
