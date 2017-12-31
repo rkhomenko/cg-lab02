@@ -64,23 +64,18 @@ void MyOpenGLWidget::initializeGL() {
 }
 
 void MyOpenGLWidget::resizeGL(int width, int height) {
-    const GLfloat matrixData[] = {
-        1.0f * MyMainWindow::DEFAULT_SIZE.width() / width,
-        0.0f,
-        0.0f,
-        0.0f,
-        0.0f,  // second line
-        1.0f * MyMainWindow::DEFAULT_SIZE.height() / height,
-        0.0f,
-        0.0f,
-        0.0f,  // third line
-        0.0f,
-        1.0f,
-        0.0f,
-        0.0f,  // fourth line
-        0.0f,
-        0.0f,
-        1.0f};
+    const auto DEFAULT_WIDTH = MyMainWindow::DEFAULT_SIZE.width();
+    const auto DEFAULT_HEIGHT = MyMainWindow::DEFAULT_SIZE.height();
+
+    auto xScaleFactor = 1.0f * DEFAULT_WIDTH / width;
+    auto yScaleFactor = 1.0f * DEFAULT_HEIGHT / height;
+
+    GLfloat matrixData[] = {
+        xScaleFactor, 0.0f,         0.0f, 0.0f,  // first line
+        0.0f,         yScaleFactor, 0.0f, 0.0f,  // second line
+        0.0f,         0.0f,         1.0f, 0.0f,  // third line
+        0.0f,         0.0f,         0.0f, 1.0f   // fourth line
+    };
     QMatrix4x4 matrix(matrixData);
 
     ShaderProgram->bind();
