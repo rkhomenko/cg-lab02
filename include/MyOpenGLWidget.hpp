@@ -21,6 +21,10 @@ class MyOpenGLWidget : public QOpenGLWidget, protected QOpenGLFunctions {
 public:
     explicit MyOpenGLWidget(QWidget* parent = nullptr);
 
+public slots:
+    void ScaleUp();
+    void ScaleDown();
+
 protected:
     void initializeGL() override;
     void resizeGL(int width, int height) override;
@@ -30,10 +34,13 @@ private slots:
     void CleanUp();
 
 private:
+    static constexpr auto SCALE_FACTOR_PER_ONCE = 1.15f;
+
     QOpenGLShaderProgram* ShaderProgram;
     QOpenGLBuffer* Buffer;
     QOpenGLVertexArrayObject* VertexArray;
     Pyramid Pyramid8Faces;
+    float ScaleFactor;
 };
 
 #endif  // CG_LAB_MYOPENGLWIDGET_HPP_

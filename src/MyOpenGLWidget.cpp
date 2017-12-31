@@ -17,9 +17,20 @@
 #include <QOpenGLContext>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLVertexArrayObject>
+#include <QSpacerItem>
 
 MyOpenGLWidget::MyOpenGLWidget(QWidget* parent)
-    : QOpenGLWidget(parent), Pyramid8Faces{8, 0.9f, 0.9f} {}
+    : QOpenGLWidget(parent), Pyramid8Faces{8, 0.9f, 0.9f}, ScaleFactor{1.0f} {}
+
+void MyOpenGLWidget::ScaleUp() {
+    ScaleFactor *= SCALE_FACTOR_PER_ONCE;
+    resizeGL(width(), height());
+}
+
+void MyOpenGLWidget::ScaleDown() {
+    ScaleFactor /= SCALE_FACTOR_PER_ONCE;
+    resizeGL(width(), height());
+}
 
 void MyOpenGLWidget::initializeGL() {
     initializeOpenGLFunctions();
@@ -71,10 +82,22 @@ void MyOpenGLWidget::resizeGL(int width, int height) {
     auto yScaleFactor = 1.0f * DEFAULT_HEIGHT / height;
 
     GLfloat matrixData[] = {
-        xScaleFactor, 0.0f,         0.0f, 0.0f,  // first line
-        0.0f,         yScaleFactor, 0.0f, 0.0f,  // second line
-        0.0f,         0.0f,         1.0f, 0.0f,  // third line
-        0.0f,         0.0f,         0.0f, 1.0f   // fourth line
+        xScaleFactor * ScaleFactor,
+        0.0f,
+        0.0f,
+        0.0f,  // first line
+        0.0f,
+        yScaleFactor * ScaleFactor,
+        0.0f,
+        0.0f,  // second line
+        0.0f,
+        0.0f,
+        1.0f,
+        0.0f,  // third line
+        0.0f,
+        0.0f,
+        0.0f,
+        1.0f  // fourth line
     };
     QMatrix4x4 matrix(matrixData);
 

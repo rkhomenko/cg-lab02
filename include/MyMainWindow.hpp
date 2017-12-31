@@ -21,6 +21,8 @@ public:
     static constexpr QSize MINIMUM_SIZE = QSize{10, 10};
 
 private:
+    QWidget* CreateCentralWidget();
+
     MyOpenGLWidget* OpenGLWidget;
 };
 
