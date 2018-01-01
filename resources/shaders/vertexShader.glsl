@@ -5,8 +5,14 @@
 
 #version 330
 attribute highp vec4 position;
-uniform highp mat4x4 transformMatrix;
+
+uniform highp mat4x4 scaleMatrix;
+uniform highp mat4x4 rotateOXMatrix;
+uniform highp mat4x4 rotateOYMatrix;
+uniform highp mat4x4 rotateOZMatrix;
 
 void main() {
-  gl_Position = position * transformMatrix;
+    mat4x4 rotateMatrix = rotateOXMatrix * rotateOYMatrix * rotateOZMatrix;
+    mat4x4 transformMatrix = rotateMatrix * scaleMatrix;
+    gl_Position = position * transformMatrix;
 }

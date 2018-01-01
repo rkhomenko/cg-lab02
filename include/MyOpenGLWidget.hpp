@@ -40,8 +40,29 @@ private slots:
     void CleanUp();
 
 private:
+    static constexpr auto VERTEX_SHADER = ":/shaders/vertexShader.glsl";
+    static constexpr auto FRAGMENT_SHADER = ":/shaders/fragmentShader.glsl";
+    static constexpr auto POSITION = "position";
+    static constexpr auto COLOR = "color";
+    static constexpr auto SCALE_MATRIX = "scaleMatrix";
+    static constexpr auto ROTATE_OX_MATRIX = "rotateOXMatrix";
+    static constexpr auto ROTATE_OY_MATRIX = "rotateOYMatrix";
+    static constexpr auto ROTATE_OZ_MATRIX = "rotateOZMatrix";
+
     static constexpr auto SCALE_FACTOR_PER_ONCE = 1.15f;
 
+    template <class Func, class... Args>
+    void OnMatrixRegenerated(const char* matrixName,
+                             Func generate,
+                             Args... args) {
+        SetUniformMatrix(matrixName, std::invoke(generate, this, args...));
+        repaint();
+    }
+
+    void UpdateScaleMatrix();
+    void SetUniformMatrix(const char* uniformName, const QMatrix4x4& matrix);
+
+    QMatrix4x4 GenerateScaleMatrix(int width, int height) const;
     QMatrix4x4 GenerateOXRotateMatrix() const;
     QMatrix4x4 GenerateOYRotateMatrix() const;
     QMatrix4x4 GenerateOZRotateMatrix() const;

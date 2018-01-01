@@ -20,7 +20,12 @@
 #include <QOpenGLVertexArrayObject>
 
 MyOpenGLWidget::MyOpenGLWidget(QWidget* parent)
-    : QOpenGLWidget(parent), Pyramid8Faces{8, 0.9f, 0.9f}, ScaleFactor{1.0f} {
+    : QOpenGLWidget(parent),
+      Pyramid8Faces{8, 0.9f, 0.9f},
+      ScaleFactor{1.0f},
+      AngleOX{0},
+      AngleOY{0},
+      AngleOZ{0} {
     auto sizePolicy =
         QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setSizePolicy(sizePolicy);
@@ -28,27 +33,30 @@ MyOpenGLWidget::MyOpenGLWidget(QWidget* parent)
 
 void MyOpenGLWidget::ScaleUpSlot() {
     ScaleFactor *= SCALE_FACTOR_PER_ONCE;
-    resizeGL(width(), height());
+    UpdateScaleMatrix();
 }
 
 void MyOpenGLWidget::ScaleDownSlot() {
     ScaleFactor /= SCALE_FACTOR_PER_ONCE;
-    resizeGL(width(), height());
+    UpdateScaleMatrix();
 }
 
 void MyOpenGLWidget::OXAngleChangedSlot(FloatType angle) {
     AngleOX = angle;
-    resizeGL(width(), height());
+    OnMatrixRegenerated(ROTATE_OX_MATRIX,
+                        &MyOpenGLWidget::GenerateOXRotateMatrix);
 }
 
 void MyOpenGLWidget::OYAngleChangedSlot(FloatType angle) {
     AngleOY = angle;
-    resizeGL(width(), height());
+    OnMatrixRegenerated(ROTATE_OY_MATRIX,
+                        &MyOpenGLWidget::GenerateOYRotateMatrix);
 }
 
 void MyOpenGLWidget::OZAngleChangedSlot(FloatType angle) {
     AngleOZ = angle;
-    resizeGL(width(), height());
+    OnMatrixRegenerated(ROTATE_OZ_MATRIX,
+                        &MyOpenGLWidget::GenerateOZRotateMatrix);
 }
 
 void MyOpenGLWidget::initializeGL() {
@@ -59,9 +67,9 @@ void MyOpenGLWidget::initializeGL() {
 
     ShaderProgram = new QOpenGLShaderProgram(this);
     ShaderProgram->addShaderFromSourceFile(QOpenGLShader::Vertex,
-                                           ":/shaders/vertexShader.glsl");
+                                           VERTEX_SHADER);
     ShaderProgram->addShaderFromSourceFile(QOpenGLShader::Fragment,
-                                           ":/shaders/fragmentShader.glsl");
+                                           FRAGMENT_SHADER);
 
     if (!ShaderProgram->link()) {
         qDebug() << ShaderProgram->log();
@@ -79,14 +87,18 @@ void MyOpenGLWidget::initializeGL() {
     VertexArray->create();
     VertexArray->bind();
 
-    int posAttr = ShaderProgram->attributeLocation("position");
+    int posAttr = ShaderProgram->attributeLocation(POSITION);
     ShaderProgram->enableAttributeArray(posAttr);
     ShaderProgram->setAttributeBuffer(posAttr, GL_FLOAT, Vertex::GetOffset(),
                                       Vertex::GetTupleSize(),
                                       Vertex::GetStride());
     auto color = QVector4D(0.0f, 0.0f, 1.0f, 1.0f);
     ShaderProgram->bind();
-    ShaderProgram->setUniformValue("color", color);
+    ShaderProgram->setUniformValue(COLOR, color);
+
+    SetUniformMatrix(ROTATE_OX_MATRIX, GenerateOXRotateMatrix());
+    SetUniformMatrix(ROTATE_OY_MATRIX, GenerateOYRotateMatrix());
+    SetUniformMatrix(ROTATE_OZ_MATRIX, GenerateOZRotateMatrix());
 
     VertexArray->release();
     Buffer->release();
@@ -94,41 +106,8 @@ void MyOpenGLWidget::initializeGL() {
 }
 
 void MyOpenGLWidget::resizeGL(int width, int height) {
-    const auto DEFAULT_WIDTH = MyMainWindow::DEFAULT_SIZE.width();
-    const auto DEFAULT_HEIGHT = MyMainWindow::DEFAULT_SIZE.height();
-
-    auto xScaleFactor = 1.0f * DEFAULT_WIDTH / width;
-    auto yScaleFactor = 1.0f * DEFAULT_HEIGHT / height;
-
-    GLfloat scaleMatrixData[] = {
-        xScaleFactor * ScaleFactor,
-        0.0f,
-        0.0f,
-        0.0f,  // first line
-        0.0f,
-        yScaleFactor * ScaleFactor,
-        0.0f,
-        0.0f,  // second line
-        0.0f,
-        0.0f,
-        1.0f,
-        0.0f,  // third line
-        0.0f,
-        0.0f,
-        0.0f,
-        1.0f  // fourth line
-    };
-    QMatrix4x4 scaleMatrix(scaleMatrixData);
-
-    auto rotateMatrix = GenerateOXRotateMatrix() * GenerateOYRotateMatrix() *
-                        GenerateOZRotateMatrix();
-
-    ShaderProgram->bind();
-    ShaderProgram->setUniformValue("transformMatrix",
-                                   rotateMatrix * scaleMatrix);
-    ShaderProgram->release();
-
-    repaint();
+    OnMatrixRegenerated(SCALE_MATRIX, &MyOpenGLWidget::GenerateScaleMatrix,
+                        width, height);
 }
 
 void MyOpenGLWidget::paintGL() {
@@ -152,6 +131,46 @@ void MyOpenGLWidget::CleanUp() {
     delete VertexArray;
     delete Buffer;
     delete ShaderProgram;
+}
+
+void MyOpenGLWidget::UpdateScaleMatrix() {
+    OnMatrixRegenerated(SCALE_MATRIX, &MyOpenGLWidget::GenerateScaleMatrix,
+                        width(), height());
+}
+
+void MyOpenGLWidget::SetUniformMatrix(const char* uniformName,
+                                      const QMatrix4x4& matrix) {
+    ShaderProgram->bind();
+    ShaderProgram->setUniformValue(uniformName, matrix);
+    ShaderProgram->release();
+}
+
+QMatrix4x4 MyOpenGLWidget::GenerateScaleMatrix(int width, int height) const {
+    const auto DEFAULT_WIDTH = MyMainWindow::DEFAULT_SIZE.width();
+    const auto DEFAULT_HEIGHT = MyMainWindow::DEFAULT_SIZE.height();
+
+    auto xScaleFactor = 1.0f * DEFAULT_WIDTH / width;
+    auto yScaleFactor = 1.0f * DEFAULT_HEIGHT / height;
+
+    GLfloat matrixData[] = {
+        xScaleFactor * ScaleFactor,
+        0.0f,
+        0.0f,
+        0.0f,  // first line
+        0.0f,
+        yScaleFactor * ScaleFactor,
+        0.0f,
+        0.0f,  // second line
+        0.0f,
+        0.0f,
+        1.0f,
+        0.0f,  // third line
+        0.0f,
+        0.0f,
+        0.0f,
+        1.0f  // fourth line
+    };
+    return QMatrix4x4(matrixData);
 }
 
 QMatrix4x4 MyOpenGLWidget::GenerateOXRotateMatrix() const {
