@@ -19,11 +19,17 @@ class MyOpenGLWidget : public QOpenGLWidget, protected QOpenGLFunctions {
     Q_OBJECT
 
 public:
+    using FloatType = float;
+
     explicit MyOpenGLWidget(QWidget* parent = nullptr);
 
 public slots:
-    void ScaleUp();
-    void ScaleDown();
+    void ScaleUpSlot();
+    void ScaleDownSlot();
+
+    void OXAngleChangedSlot(FloatType angle);
+    void OYAngleChangedSlot(FloatType angle);
+    void OZAngleChangedSlot(FloatType angle);
 
 protected:
     void initializeGL() override;
@@ -36,11 +42,18 @@ private slots:
 private:
     static constexpr auto SCALE_FACTOR_PER_ONCE = 1.15f;
 
+    QMatrix4x4 GenerateOXRotateMatrix() const;
+    QMatrix4x4 GenerateOYRotateMatrix() const;
+    QMatrix4x4 GenerateOZRotateMatrix() const;
+
     QOpenGLShaderProgram* ShaderProgram;
     QOpenGLBuffer* Buffer;
     QOpenGLVertexArrayObject* VertexArray;
     Pyramid Pyramid8Faces;
-    float ScaleFactor;
+    FloatType ScaleFactor;
+    FloatType AngleOX;
+    FloatType AngleOY;
+    FloatType AngleOZ;
 };
 
 #endif  // CG_LAB_MYOPENGLWIDGET_HPP_

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.10.0 FATAL_ERROR)
 project(cg-lab02 VERSION 0.1.0 LANGUAGES CXX)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
@@ -16,9 +16,12 @@ set(HEADER_SUFFIX "hpp")
 set(SOURCE_SUFFIX "cpp")
 set(INCLUDE_DIR "include")
 set(SOURCE_DIR "src")
-set(RESOURCES_FILE "resources.qrc")
+set(UI_FILE "ui/MyControlWidget.ui")
+set(RESOURCES_FILE "resources/resources.qrc")
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_AUTOUIC_SEARCH_PATHS ${UI_DIR})
+
 set(CMAKE_AUTOMOC ON)
 
 find_package(Qt5Widgets REQUIRED)
@@ -30,7 +33,10 @@ include_directories(${INCLUDE_DIR})
 include_directories(${Qt5Widgets_INCLUDE_DIRS})
 
 qt5_add_resources(RESOURCES ${RESOURCES_FILE})
+qt5_wrap_ui(UI_INCLUDES ${UI_FILE})
 
-add_executable(${PROJECT_NAME} ${INCLUDES} ${SOURCES} ${RESOURCES})
+add_executable(${PROJECT_NAME} ${INCLUDES} ${UI_INCLUDES}
+                               ${SOURCES}
+                               ${RESOURCES})
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 target_link_libraries(${PROJECT_NAME} Qt5::Widgets)

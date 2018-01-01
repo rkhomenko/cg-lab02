@@ -9,21 +9,27 @@
 #include <QMainWindow>
 
 class MyOpenGLWidget;
+class MyControlWidget;
 
 class MyMainWindow : public QMainWindow {
     Q_OBJECT
 
 public:
-    MyMainWindow(QWidget* parent = nullptr);
+    explicit MyMainWindow(QWidget* parent = nullptr);
     ~MyMainWindow();
 
-    static constexpr QSize DEFAULT_SIZE = QSize{400, 400};
-    static constexpr QSize MINIMUM_SIZE = QSize{10, 10};
+    static constexpr auto DEFAULT_SIZE = QSize{400, 400};
+    static constexpr auto MINIMUM_SIZE = QSize{10, 10};
+    static constexpr auto VARIANT_DESCRIPTION =
+        "Computer grapics lab 2\n"
+        "Variant 20: octagonal truncated pyramid\n"
+        "Made by Roman Khomenko (8O-308)";
 
 private:
     QWidget* CreateCentralWidget();
 
     MyOpenGLWidget* OpenGLWidget;
+    MyControlWidget* ControlWidget;
 };
 
 #endif  // CG_LAB_MYMAINWINDOW_HPP_
