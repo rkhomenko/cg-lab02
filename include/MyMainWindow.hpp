@@ -18,8 +18,6 @@ public:
     explicit MyMainWindow(QWidget* parent = nullptr);
     ~MyMainWindow();
 
-    static constexpr auto DEFAULT_SIZE = QSize{400, 400};
-    static constexpr auto MINIMUM_SIZE = QSize{10, 10};
     static constexpr auto VARIANT_DESCRIPTION =
         "Computer grapics lab 2\n"
         "Variant 20: octagonal truncated pyramid\n"

@@ -29,6 +29,7 @@ MyOpenGLWidget::MyOpenGLWidget(QWidget* parent)
     auto sizePolicy =
         QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setSizePolicy(sizePolicy);
+    setMinimumSize(DEFAULT_SIZE);
 }
 
 void MyOpenGLWidget::ScaleUpSlot() {
@@ -146,8 +147,8 @@ void MyOpenGLWidget::SetUniformMatrix(const char* uniformName,
 }
 
 QMatrix4x4 MyOpenGLWidget::GenerateScaleMatrix(int width, int height) const {
-    const auto DEFAULT_WIDTH = MyMainWindow::DEFAULT_SIZE.width();
-    const auto DEFAULT_HEIGHT = MyMainWindow::DEFAULT_SIZE.height();
+    const auto DEFAULT_WIDTH = DEFAULT_SIZE.width();
+    const auto DEFAULT_HEIGHT = DEFAULT_SIZE.height();
 
     auto xScaleFactor = 1.0f * DEFAULT_WIDTH / width;
     auto yScaleFactor = 1.0f * DEFAULT_HEIGHT / height;

@@ -40,6 +40,8 @@ private slots:
     void CleanUp();
 
 private:
+    static constexpr auto DEFAULT_SIZE = QSize(350, 350);
+
     static constexpr auto VERTEX_SHADER = ":/shaders/vertexShader.glsl";
     static constexpr auto FRAGMENT_SHADER = ":/shaders/fragmentShader.glsl";
     static constexpr auto POSITION = "position";

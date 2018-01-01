@@ -7,8 +7,8 @@
 #include <MyMainWindow.hpp>
 #include <MyOpenGLWidget.hpp>
 
+#include <QHBoxLayout>
 #include <QLabel>
-#include <QLayout>
 #include <QSurfaceFormat>
 #include <QVBoxLayout>
 
@@ -21,7 +21,6 @@ MyMainWindow::MyMainWindow(QWidget* parent) : QMainWindow(parent) {
 
     OpenGLWidget = new MyOpenGLWidget;
     OpenGLWidget->setFormat(format);
-    OpenGLWidget->setMinimumSize(DEFAULT_SIZE);
 
     ControlWidget = new MyControlWidget;
 
@@ -50,11 +49,13 @@ MyMainWindow::~MyMainWindow() {
 QWidget* MyMainWindow::CreateCentralWidget() {
     auto widget = new QWidget;
     auto layout = new QVBoxLayout;
+    auto toolLayout = new QHBoxLayout;
+
+    toolLayout->addWidget(ControlWidget);
+    toolLayout->addWidget(new QLabel(VARIANT_DESCRIPTION));
 
     layout->setSizeConstraint(QLayout::SetNoConstraint);
-
-    layout->addWidget(new QLabel(VARIANT_DESCRIPTION));
-    layout->addWidget(ControlWidget);
+    layout->addLayout(toolLayout);
     layout->addWidget(OpenGLWidget);
 
     widget->setLayout(layout);
