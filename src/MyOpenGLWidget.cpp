@@ -18,6 +18,7 @@
 #include <QOpenGLContext>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLVertexArrayObject>
+#include <QResizeEvent>
 
 MyOpenGLWidget::MyOpenGLWidget(QWidget* parent)
     : QOpenGLWidget(parent),
@@ -44,20 +45,17 @@ void MyOpenGLWidget::ScaleDownSlot() {
 
 void MyOpenGLWidget::OXAngleChangedSlot(FloatType angle) {
     AngleOX = angle;
-    OnMatrixRegenerated(ROTATE_OX_MATRIX,
-                        &MyOpenGLWidget::GenerateOXRotateMatrix);
+    RegenerateMatrix(ROTATE_OX_MATRIX, &MyOpenGLWidget::GenerateOXRotateMatrix);
 }
 
 void MyOpenGLWidget::OYAngleChangedSlot(FloatType angle) {
     AngleOY = angle;
-    OnMatrixRegenerated(ROTATE_OY_MATRIX,
-                        &MyOpenGLWidget::GenerateOYRotateMatrix);
+    RegenerateMatrix(ROTATE_OY_MATRIX, &MyOpenGLWidget::GenerateOYRotateMatrix);
 }
 
 void MyOpenGLWidget::OZAngleChangedSlot(FloatType angle) {
     AngleOZ = angle;
-    OnMatrixRegenerated(ROTATE_OZ_MATRIX,
-                        &MyOpenGLWidget::GenerateOZRotateMatrix);
+    RegenerateMatrix(ROTATE_OZ_MATRIX, &MyOpenGLWidget::GenerateOZRotateMatrix);
 }
 
 void MyOpenGLWidget::initializeGL() {
@@ -107,8 +105,7 @@ void MyOpenGLWidget::initializeGL() {
 }
 
 void MyOpenGLWidget::resizeGL(int width, int height) {
-    OnMatrixRegenerated(SCALE_MATRIX, &MyOpenGLWidget::GenerateScaleMatrix,
-                        width, height);
+    SetUniformMatrix(SCALE_MATRIX, GenerateScaleMatrix(width, height));
 }
 
 void MyOpenGLWidget::paintGL() {
@@ -134,9 +131,14 @@ void MyOpenGLWidget::CleanUp() {
     delete ShaderProgram;
 }
 
+void MyOpenGLWidget::OnWidgetUpdate() {
+    auto event = new QResizeEvent(size(), size());
+    QOpenGLWidget::event(event);
+}
+
 void MyOpenGLWidget::UpdateScaleMatrix() {
-    OnMatrixRegenerated(SCALE_MATRIX, &MyOpenGLWidget::GenerateScaleMatrix,
-                        width(), height());
+    RegenerateMatrix(SCALE_MATRIX, &MyOpenGLWidget::GenerateScaleMatrix,
+                     width(), height());
 }
 
 void MyOpenGLWidget::SetUniformMatrix(const char* uniformName,

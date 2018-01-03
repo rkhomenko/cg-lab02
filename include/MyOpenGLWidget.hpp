@@ -54,13 +54,13 @@ private:
     static constexpr auto SCALE_FACTOR_PER_ONCE = 1.15f;
 
     template <class Func, class... Args>
-    void OnMatrixRegenerated(const char* matrixName,
-                             Func generate,
-                             Args... args) {
+    void RegenerateMatrix(const char* matrixName, Func generate, Args... args) {
         SetUniformMatrix(matrixName, std::invoke(generate, this, args...));
-        repaint();
+        update();
+        OnWidgetUpdate();
     }
 
+    void OnWidgetUpdate();
     void UpdateScaleMatrix();
     void SetUniformMatrix(const char* uniformName, const QMatrix4x4& matrix);
 
