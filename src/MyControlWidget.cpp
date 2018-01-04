@@ -27,20 +27,23 @@ MyControlWidget::MyControlWidget(QWidget* parent)
         return 1.0f * (value - MIN) / (MAX - MIN) * TETA_MAX;
     };
 
-    connect(WidgetUi->oxSlider, &QSlider::valueChanged, this, [&,this](int value) {
-        auto result = calculateAngle(WidgetUi->oxSlider, value);
-        emit OXAngleChangedSignal(result);
-    });
+    connect(WidgetUi->oxSlider, &QSlider::valueChanged, this,
+            [&, this](int value) {
+                auto result = calculateAngle(WidgetUi->oxSlider, value);
+                emit OXAngleChangedSignal(result);
+            });
 
-    connect(WidgetUi->oySlider, &QSlider::valueChanged, this, [&,this](int value) {
-        auto result = calculateAngle(WidgetUi->oySlider, value);
-        emit OYAngleChangedSignal(result);
-    });
+    connect(WidgetUi->oySlider, &QSlider::valueChanged, this,
+            [&, this](int value) {
+                auto result = calculateAngle(WidgetUi->oySlider, value);
+                emit OYAngleChangedSignal(result);
+            });
 
-    connect(WidgetUi->ozSlider, &QSlider::valueChanged, this, [&,this](int value) {
-        auto result = calculateAngle(WidgetUi->ozSlider, value);
-        emit OZAngleChangedSignal(result);
-    });
+    connect(WidgetUi->ozSlider, &QSlider::valueChanged, this,
+            [&, this](int value) {
+                auto result = calculateAngle(WidgetUi->ozSlider, value);
+                emit OZAngleChangedSignal(result);
+            });
 }
 
 MyControlWidget::~MyControlWidget() {

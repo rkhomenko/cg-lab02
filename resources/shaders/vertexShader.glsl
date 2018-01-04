@@ -10,9 +10,16 @@ uniform highp mat4x4 scaleMatrix;
 uniform highp mat4x4 rotateOXMatrix;
 uniform highp mat4x4 rotateOYMatrix;
 uniform highp mat4x4 rotateOZMatrix;
+uniform highp mat4x4 projectionMatrix;
+uniform highp mat4x4 moveToXYMatrix;
 
 void main() {
-    mat4x4 rotateMatrix = rotateOXMatrix * rotateOYMatrix * rotateOZMatrix;
-    mat4x4 transformMatrix = rotateMatrix * scaleMatrix;
-    gl_Position = position * transformMatrix;
+    mat4x4 rotateMatrix = rotateOXMatrix *
+                          rotateOYMatrix *
+                          rotateOZMatrix;
+    gl_Position = position *
+                  rotateMatrix *
+                  projectionMatrix *
+                  moveToXYMatrix *
+                  scaleMatrix;
 }

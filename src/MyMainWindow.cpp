@@ -13,36 +13,55 @@
 #include <QVBoxLayout>
 
 MyMainWindow::MyMainWindow(QWidget* parent) : QMainWindow(parent) {
+    ControlWidget = new MyControlWidget;
+
     QSurfaceFormat format;
     format.setDepthBufferSize(24);
     format.setStencilBufferSize(8);
+    format.setRenderableType(QSurfaceFormat::OpenGL);
     format.setVersion(3, 3);
     format.setProfile(QSurfaceFormat::CoreProfile);
 
-    OpenGLWidget = new MyOpenGLWidget;
-    OpenGLWidget->setFormat(format);
+    OrthoOpenGLWidgets[0] =
+        new MyOpenGLWidget(MyOpenGLWidget::ProjectionType::ORTHOGRAPHIC,
+                           MyOpenGLWidget::ProjectionSurface::X);
+    OrthoOpenGLWidgets[0]->setFormat(format);
+    OrthoOpenGLWidgets[1] =
+        new MyOpenGLWidget(MyOpenGLWidget::ProjectionType::ORTHOGRAPHIC,
+                           MyOpenGLWidget::ProjectionSurface::Y);
+    OrthoOpenGLWidgets[1]->setFormat(format);
+    OrthoOpenGLWidgets[2] =
+        new MyOpenGLWidget(MyOpenGLWidget::ProjectionType::ORTHOGRAPHIC,
+                           MyOpenGLWidget::ProjectionSurface::Z);
+    OrthoOpenGLWidgets[2]->setFormat(format);
 
-    ControlWidget = new MyControlWidget;
+    auto initWidget = [this](MyOpenGLWidget* openGLWidget) {
+        // set connection for redraw on scale changed
+        connect(ControlWidget, &MyControlWidget::ScaleUpSignal, openGLWidget,
+                &MyOpenGLWidget::ScaleUpSlot);
+        connect(ControlWidget, &MyControlWidget::ScaleDownSignal, openGLWidget,
+                &MyOpenGLWidget::ScaleDownSlot);
 
-    // set connection for redraw on scale changed
-    connect(ControlWidget, &MyControlWidget::ScaleUpSignal, OpenGLWidget,
-            &MyOpenGLWidget::ScaleUpSlot);
-    connect(ControlWidget, &MyControlWidget::ScaleDownSignal, OpenGLWidget,
-            &MyOpenGLWidget::ScaleDownSlot);
+        // set connection for redraw on angle changed
+        connect(ControlWidget, &MyControlWidget::OXAngleChangedSignal,
+                openGLWidget, &MyOpenGLWidget::OXAngleChangedSlot);
+        connect(ControlWidget, &MyControlWidget::OYAngleChangedSignal,
+                openGLWidget, &MyOpenGLWidget::OYAngleChangedSlot);
+        connect(ControlWidget, &MyControlWidget::OZAngleChangedSignal,
+                openGLWidget, &MyOpenGLWidget::OZAngleChangedSlot);
+    };
 
-    // set connection for redraw on angle changed
-    connect(ControlWidget, &MyControlWidget::OXAngleChangedSignal, OpenGLWidget,
-            &MyOpenGLWidget::OXAngleChangedSlot);
-    connect(ControlWidget, &MyControlWidget::OYAngleChangedSignal, OpenGLWidget,
-            &MyOpenGLWidget::OYAngleChangedSlot);
-    connect(ControlWidget, &MyControlWidget::OZAngleChangedSignal, OpenGLWidget,
-            &MyOpenGLWidget::OZAngleChangedSlot);
+    for (auto ptr : OrthoOpenGLWidgets) {
+        initWidget(ptr);
+    }
 
     setCentralWidget(CreateCentralWidget());
 }
 
 MyMainWindow::~MyMainWindow() {
-    delete OpenGLWidget;
+    for (auto ptr : OrthoOpenGLWidgets) {
+        delete ptr;
+    }
     delete ControlWidget;
 }
 
@@ -56,7 +75,12 @@ QWidget* MyMainWindow::CreateCentralWidget() {
 
     layout->setSizeConstraint(QLayout::SetNoConstraint);
     layout->addLayout(toolLayout);
-    layout->addWidget(OpenGLWidget);
+
+    auto orthoWidgetsLayout = new QHBoxLayout;
+    for (auto ptr : OrthoOpenGLWidgets) {
+        orthoWidgetsLayout->addWidget(ptr);
+    }
+    layout->addLayout(orthoWidgetsLayout);
 
     widget->setLayout(layout);
     return widget;

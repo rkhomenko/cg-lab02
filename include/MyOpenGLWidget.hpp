@@ -20,8 +20,13 @@ class MyOpenGLWidget : public QOpenGLWidget, protected QOpenGLFunctions {
 
 public:
     using FloatType = float;
+    enum class ProjectionType { ORTHOGRAPHIC, ISOMETRIC, NO_PROJECTION };
+    enum class ProjectionSurface : int { X = 0, Y, Z, NO_SURFACE };
 
     explicit MyOpenGLWidget(QWidget* parent = nullptr);
+    explicit MyOpenGLWidget(ProjectionType projType,
+                            ProjectionSurface projSurface,
+                            QWidget* parent = nullptr);
 
 public slots:
     void ScaleUpSlot();
@@ -40,6 +45,8 @@ private slots:
     void CleanUp();
 
 private:
+    enum RotateType { OX, OY, OZ };
+
     static constexpr auto DEFAULT_SIZE = QSize(350, 350);
 
     static constexpr auto VERTEX_SHADER = ":/shaders/vertexShader.glsl";
@@ -50,6 +57,8 @@ private:
     static constexpr auto ROTATE_OX_MATRIX = "rotateOXMatrix";
     static constexpr auto ROTATE_OY_MATRIX = "rotateOYMatrix";
     static constexpr auto ROTATE_OZ_MATRIX = "rotateOZMatrix";
+    static constexpr auto PROJECTION_MATRIX = "projectionMatrix";
+    static constexpr auto MOVE_TO_XY_MATRIX = "moveToXYMatrix";
 
     static constexpr auto SCALE_FACTOR_PER_ONCE = 1.15f;
 
@@ -65,9 +74,14 @@ private:
     void SetUniformMatrix(const char* uniformName, const QMatrix4x4& matrix);
 
     QMatrix4x4 GenerateScaleMatrix(int width, int height) const;
-    QMatrix4x4 GenerateOXRotateMatrix() const;
-    QMatrix4x4 GenerateOYRotateMatrix() const;
-    QMatrix4x4 GenerateOZRotateMatrix() const;
+    QMatrix4x4 GenerateRotateMatrix(RotateType rotateType) const;
+
+    static QMatrix4x4 GenerateRotateMatrixByAngle(RotateType rotateType,
+                                                  FloatType angle);
+    static QMatrix4x4 GenerateProjectionMatrix(ProjectionType projType,
+                                               ProjectionSurface projSurface);
+    static QMatrix4x4 GenerateMoveToXYMatrix(ProjectionType projType,
+                                             ProjectionSurface projSurface);
 
     QOpenGLShaderProgram* ShaderProgram;
     QOpenGLBuffer* Buffer;
@@ -77,6 +91,8 @@ private:
     FloatType AngleOX;
     FloatType AngleOY;
     FloatType AngleOZ;
+    ProjectionType ProjType;
+    ProjectionSurface ProjSurface;
 };
 
 #endif  // CG_LAB_MYOPENGLWIDGET_HPP_

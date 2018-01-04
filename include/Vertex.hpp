@@ -33,7 +33,7 @@ public:
     static constexpr IntType GetStride() { return sizeof(Vertex); }
 
 private:
-    static const IntType TUPLE_SIZE = 3;
+    static const IntType TUPLE_SIZE = 4;
 
     PositionType Position;
 };

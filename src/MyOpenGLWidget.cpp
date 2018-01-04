@@ -21,12 +21,21 @@
 #include <QResizeEvent>
 
 MyOpenGLWidget::MyOpenGLWidget(QWidget* parent)
+    : MyOpenGLWidget(ProjectionType::NO_PROJECTION,
+                     ProjectionSurface::NO_SURFACE,
+                     parent) {}
+
+MyOpenGLWidget::MyOpenGLWidget(ProjectionType projType,
+                               ProjectionSurface projSurface,
+                               QWidget* parent)
     : QOpenGLWidget(parent),
       Pyramid8Faces{8, 0.9f, 0.9f},
       ScaleFactor{1.0f},
       AngleOX{0},
       AngleOY{0},
-      AngleOZ{0} {
+      AngleOZ{0},
+      ProjType{projType},
+      ProjSurface{projSurface} {
     auto sizePolicy =
         QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setSizePolicy(sizePolicy);
@@ -45,17 +54,20 @@ void MyOpenGLWidget::ScaleDownSlot() {
 
 void MyOpenGLWidget::OXAngleChangedSlot(FloatType angle) {
     AngleOX = angle;
-    RegenerateMatrix(ROTATE_OX_MATRIX, &MyOpenGLWidget::GenerateOXRotateMatrix);
+    RegenerateMatrix(ROTATE_OX_MATRIX, &MyOpenGLWidget::GenerateRotateMatrix,
+                     RotateType::OX);
 }
 
 void MyOpenGLWidget::OYAngleChangedSlot(FloatType angle) {
     AngleOY = angle;
-    RegenerateMatrix(ROTATE_OY_MATRIX, &MyOpenGLWidget::GenerateOYRotateMatrix);
+    RegenerateMatrix(ROTATE_OY_MATRIX, &MyOpenGLWidget::GenerateRotateMatrix,
+                     RotateType::OY);
 }
 
 void MyOpenGLWidget::OZAngleChangedSlot(FloatType angle) {
     AngleOZ = angle;
-    RegenerateMatrix(ROTATE_OZ_MATRIX, &MyOpenGLWidget::GenerateOZRotateMatrix);
+    RegenerateMatrix(ROTATE_OZ_MATRIX, &MyOpenGLWidget::GenerateRotateMatrix,
+                     RotateType::OZ);
 }
 
 void MyOpenGLWidget::initializeGL() {
@@ -95,9 +107,13 @@ void MyOpenGLWidget::initializeGL() {
     ShaderProgram->bind();
     ShaderProgram->setUniformValue(COLOR, color);
 
-    SetUniformMatrix(ROTATE_OX_MATRIX, GenerateOXRotateMatrix());
-    SetUniformMatrix(ROTATE_OY_MATRIX, GenerateOYRotateMatrix());
-    SetUniformMatrix(ROTATE_OZ_MATRIX, GenerateOZRotateMatrix());
+    SetUniformMatrix(ROTATE_OX_MATRIX, GenerateRotateMatrix(RotateType::OX));
+    SetUniformMatrix(ROTATE_OY_MATRIX, GenerateRotateMatrix(RotateType::OY));
+    SetUniformMatrix(ROTATE_OZ_MATRIX, GenerateRotateMatrix(RotateType::OZ));
+    SetUniformMatrix(PROJECTION_MATRIX,
+                     GenerateProjectionMatrix(ProjType, ProjSurface));
+    SetUniformMatrix(MOVE_TO_XY_MATRIX,
+                     GenerateMoveToXYMatrix(ProjType, ProjSurface));
 
     VertexArray->release();
     Buffer->release();
@@ -117,7 +133,8 @@ void MyOpenGLWidget::paintGL() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     VertexArray->bind();
-    glDrawArrays(GL_TRIANGLES, 0, Pyramid8Faces.GetVerticesCount());
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, Pyramid8Faces.GetVerticesCount());
     VertexArray->release();
 
     ShaderProgram->release();
@@ -176,58 +193,69 @@ QMatrix4x4 MyOpenGLWidget::GenerateScaleMatrix(int width, int height) const {
     return QMatrix4x4(matrixData);
 }
 
-QMatrix4x4 MyOpenGLWidget::GenerateOXRotateMatrix() const {
-    GLfloat matrixData[] = {
+QMatrix4x4 MyOpenGLWidget::GenerateRotateMatrix(RotateType rotateType) const {
+    FloatType angle = 0;
+    switch (rotateType) {
+        case RotateType::OX:
+            angle = AngleOX;
+            break;
+        case RotateType::OY:
+            angle = AngleOY;
+            break;
+        case RotateType::OZ:
+            angle = AngleOZ;
+            break;
+    }
+    return GenerateRotateMatrixByAngle(rotateType, angle);
+}
+
+QMatrix4x4 MyOpenGLWidget::GenerateRotateMatrixByAngle(RotateType rotateType,
+                                                       FloatType angle) {
+    const FloatType rotateOXData[] = {
         1.0f,
         0,
         0,
         0,  // first line
         0,
-        std::cos(AngleOX),
-        std::sin(AngleOX),
+        std::cos(angle),
+        std::sin(angle),
         0,  // second line
         0,
-        -std::sin(AngleOX),
-        std::cos(AngleOX),
+        -std::sin(angle),
+        std::cos(angle),
         0,  // third line
         0,
         0,
         0,
         1.0f  // fourth line
     };
-    return QMatrix4x4(matrixData);
-}
 
-QMatrix4x4 MyOpenGLWidget::GenerateOYRotateMatrix() const {
-    GLfloat matrixData[] = {
-        std::cos(AngleOY),
+    const FloatType rotateOYData[] = {
+        std::cos(angle),
         0,
-        -std::sin(AngleOY),
+        -std::sin(angle),
         0,  // fist line
         0,
         1.0f,
         0,
         0,  // second line
-        std::sin(AngleOY),
+        std::sin(angle),
         0,
-        std::cos(AngleOY),
+        std::cos(angle),
         0,  // third line
         0,
         0,
         0,
         1.0f  // fourth line
     };
-    return QMatrix4x4(matrixData);
-}
 
-QMatrix4x4 MyOpenGLWidget::GenerateOZRotateMatrix() const {
-    GLfloat matrixData[] = {
-        std::cos(AngleOZ),
-        std::sin(AngleOZ),
+    const FloatType rotateOZData[] = {
+        std::cos(angle),
+        std::sin(angle),
         0,
         0,  // first line
-        -std::sin(AngleOZ),
-        std::cos(AngleOZ),
+        -std::sin(angle),
+        std::cos(angle),
         0,
         0,  // second line
         0,
@@ -239,5 +267,99 @@ QMatrix4x4 MyOpenGLWidget::GenerateOZRotateMatrix() const {
         0,
         1.0f  // fourth line
     };
+
+    const FloatType* matrixData = nullptr;
+    switch (rotateType) {
+        case RotateType::OX:
+            matrixData = rotateOXData;
+            break;
+        case RotateType::OY:
+            matrixData = rotateOYData;
+            break;
+        case RotateType::OZ:
+            matrixData = rotateOZData;
+            break;
+    }
+
     return QMatrix4x4(matrixData);
+}
+
+QMatrix4x4 MyOpenGLWidget::GenerateProjectionMatrix(
+    ProjectionType projType,
+    ProjectionSurface projSurface) {
+    const auto X_COORD = 0;
+    const auto Y_COORD = 1;
+    const auto Z_COORD = 2;
+    const FloatType orthoMatrixData[] = {
+        1, 0, 0, 0,  // first line
+        0, 1, 0, 0,  // second line
+        0, 0, 1, 0,  // third line
+        0, 0, 0, 1   // fourth line
+    };
+
+    QMatrix4x4 projectionMatrix;
+    switch (projType) {
+        case ProjectionType::ORTHOGRAPHIC:
+            projectionMatrix = QMatrix4x4(orthoMatrixData);
+            switch (projSurface) {
+                case ProjectionSurface::X:
+                    projectionMatrix(X_COORD, X_COORD) = 0;
+                    break;
+                case ProjectionSurface::Y:
+                    projectionMatrix(Y_COORD, Y_COORD) = 0;
+                    break;
+                case ProjectionSurface::Z:
+                    projectionMatrix(Z_COORD, Z_COORD) = 0;
+                    break;
+                case ProjectionSurface::NO_SURFACE:
+                    break;
+            }
+            break;
+        case ProjectionType::ISOMETRIC:
+            break;
+        case ProjectionType::NO_PROJECTION:
+            break;
+    }
+
+    return projectionMatrix;
+}
+
+QMatrix4x4 MyOpenGLWidget::GenerateMoveToXYMatrix(
+    ProjectionType projType,
+    ProjectionSurface projSurface) {
+    const auto PI = 4 * std::atan(1.0f);
+    const FloatType eData[] = {
+        1, 0, 0, 0,  // first line
+        0, 1, 0, 0,  // second line
+        0, 0, 1, 0,  // third line
+        0, 0, 0, 1   // fourth line
+    };
+    const QMatrix4x4 E(eData);
+
+    QMatrix4x4 moveToXYMatrix;
+    switch (projType) {
+        case ProjectionType::ORTHOGRAPHIC:
+            switch (projSurface) {
+                case ProjectionSurface::X:
+                    moveToXYMatrix =
+                        GenerateRotateMatrixByAngle(RotateType::OY, PI / 2);
+                    break;
+                case ProjectionSurface::Y:
+                    moveToXYMatrix =
+                        GenerateRotateMatrixByAngle(RotateType::OX, -PI / 2);
+                    break;
+                case ProjectionSurface::Z:
+                    moveToXYMatrix = E;
+                    break;
+                case ProjectionSurface::NO_SURFACE:
+                    break;
+            }
+            break;
+        case ProjectionType::ISOMETRIC:
+            break;
+        case ProjectionType::NO_PROJECTION:
+            break;
+    }
+
+    return moveToXYMatrix;
 }

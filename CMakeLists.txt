@@ -25,6 +25,7 @@ set(CMAKE_AUTOUIC_SEARCH_PATHS ${UI_DIR})
 set(CMAKE_AUTOMOC ON)
 
 find_package(Qt5Widgets REQUIRED)
+find_package(OpenGL REQUIRED)
 
 file(GLOB_RECURSE INCLUDES "${INCLUDE_DIR}/*.${HEADER_SUFFIX}")
 file(GLOB_RECURSE SOURCES "${SOURCE_DIR}/*.${SOURCE_SUFFIX}")
@@ -39,4 +40,4 @@ add_executable(${PROJECT_NAME} ${INCLUDES} ${UI_INCLUDES}
                                ${SOURCES}
                                ${RESOURCES})
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
-target_link_libraries(${PROJECT_NAME} Qt5::Widgets)
+target_link_libraries(${PROJECT_NAME} Qt5::Widgets ${OPENGL_LIBRARIES})

@@ -8,6 +8,8 @@
 
 #include <QMainWindow>
 
+#include <array>
+
 class MyOpenGLWidget;
 class MyControlWidget;
 
@@ -26,7 +28,7 @@ public:
 private:
     QWidget* CreateCentralWidget();
 
-    MyOpenGLWidget* OpenGLWidget;
+    std::array<MyOpenGLWidget*, 3> OrthoOpenGLWidgets;
     MyControlWidget* ControlWidget;
 };
 
