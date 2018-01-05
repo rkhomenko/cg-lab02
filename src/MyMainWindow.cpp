@@ -10,6 +10,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QSurfaceFormat>
+#include <QTabWidget>
 #include <QVBoxLayout>
 
 MyMainWindow::MyMainWindow(QWidget* parent) : QMainWindow(parent) {
@@ -80,8 +81,25 @@ QWidget* MyMainWindow::CreateCentralWidget() {
     for (auto ptr : OrthoOpenGLWidgets) {
         orthoWidgetsLayout->addWidget(ptr);
     }
-    layout->addLayout(orthoWidgetsLayout);
 
+    auto isometricWidgetsLayout = new QHBoxLayout;
+    // TODO: add isometric projection widgets
+
+    auto createWidgetWithLayout = [](QLayout* layout) {
+        auto widget = new QWidget;
+        widget->setLayout(layout);
+        return widget;
+    };
+
+    auto orthoTabWidget = createWidgetWithLayout(orthoWidgetsLayout);
+    auto isometricTabWidget = createWidgetWithLayout(isometricWidgetsLayout);
+
+    auto tabWidget = new QTabWidget;
+    tabWidget->addTab(orthoTabWidget, "Orthogonal projections");
+    tabWidget->addTab(isometricTabWidget, "Isometric projections");
+
+    layout->addWidget(tabWidget);
     widget->setLayout(layout);
+
     return widget;
 }
