@@ -60,7 +60,7 @@ private slots:
 private:
     enum RotateType { OX, OY, OZ };
 
-    static constexpr auto DEFAULT_SIZE = QSize(350, 350);
+    static constexpr auto DEFAULT_SIZE = QSize(300, 300);
 
     static constexpr auto VERTEX_SHADER = ":/shaders/vertexShader.glsl";
     static constexpr auto FRAGMENT_SHADER = ":/shaders/fragmentShader.glsl";

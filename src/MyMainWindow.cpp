@@ -7,6 +7,8 @@
 #include <MyMainWindow.hpp>
 #include <MyOpenGLWidget.hpp>
 
+#include <vector>
+
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QSurfaceFormat>
@@ -25,9 +27,8 @@ MyMainWindow::MyMainWindow(QWidget* parent) : QMainWindow(parent) {
 
     auto i = 0UL;
     for (auto projSurface : MyOpenGLWidget::GetProjectionSurfaces()) {
-        OrthoOpenGLWidgets[i] =
-            new MyOpenGLWidget(MyOpenGLWidget::ProjectionType::ORTHOGRAPHIC,
-                               projSurface);
+        OrthoOpenGLWidgets[i] = new MyOpenGLWidget(
+            MyOpenGLWidget::ProjectionType::ORTHOGRAPHIC, projSurface);
         OrthoOpenGLWidgets[i]->setFormat(format);
         i++;
     }
@@ -73,9 +74,27 @@ QWidget* MyMainWindow::CreateCentralWidget() {
     layout->setSizeConstraint(QLayout::SetNoConstraint);
     layout->addLayout(toolLayout);
 
+    auto createOpenGLWidgetWithLabel = [](QWidget* widget, const char* str) {
+        const auto fixedSizePolicy =
+            QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+        auto vertLayout = new QVBoxLayout;
+        auto label = new QLabel(str);
+        label->setSizePolicy(fixedSizePolicy);
+
+        vertLayout->addWidget(label);
+        vertLayout->addWidget(widget);
+
+        return vertLayout;
+    };
+
+    std::vector<const char*> projInfoArray = {"x = 0 (YZ)", "y = 0 (XZ)",
+                                              "z = 0 (XY)"};
+
     auto orthoWidgetsLayout = new QHBoxLayout;
-    for (auto ptr : OrthoOpenGLWidgets) {
-        orthoWidgetsLayout->addWidget(ptr);
+    auto i = 0U;
+    for (auto projInfo : projInfoArray) {
+        orthoWidgetsLayout->addLayout(
+            createOpenGLWidgetWithLabel(OrthoOpenGLWidgets[i++], projInfo));
     }
 
     auto isometricWidgetsLayout = new QHBoxLayout;
