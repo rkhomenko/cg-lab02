@@ -8,6 +8,8 @@
 
 #include <Pyramid.hpp>
 
+#include <array>
+
 #include <QOpenGLFunctions>
 #include <QOpenGLWidget>
 
@@ -21,7 +23,18 @@ class MyOpenGLWidget : public QOpenGLWidget, protected QOpenGLFunctions {
 public:
     using FloatType = float;
     enum class ProjectionType { ORTHOGRAPHIC, ISOMETRIC, NO_PROJECTION };
-    enum class ProjectionSurface : int { X = 0, Y, Z, NO_SURFACE };
+    enum class ProjectionSurface : int { X, Y, Z, NO_SURFACE };
+
+    static constexpr std::array<ProjectionType, 2>
+    GetProjectionTypes() noexcept {
+        return {ProjectionType::ORTHOGRAPHIC, ProjectionType::ISOMETRIC};
+    }
+
+    static constexpr std::array<ProjectionSurface, 3>
+    GetProjectionSurfaces() noexcept {
+        return {ProjectionSurface::X, ProjectionSurface::Y,
+                ProjectionSurface::Z};
+    }
 
     explicit MyOpenGLWidget(QWidget* parent = nullptr);
     explicit MyOpenGLWidget(ProjectionType projType,

@@ -23,18 +23,14 @@ MyMainWindow::MyMainWindow(QWidget* parent) : QMainWindow(parent) {
     format.setVersion(3, 3);
     format.setProfile(QSurfaceFormat::CoreProfile);
 
-    OrthoOpenGLWidgets[0] =
-        new MyOpenGLWidget(MyOpenGLWidget::ProjectionType::ORTHOGRAPHIC,
-                           MyOpenGLWidget::ProjectionSurface::X);
-    OrthoOpenGLWidgets[0]->setFormat(format);
-    OrthoOpenGLWidgets[1] =
-        new MyOpenGLWidget(MyOpenGLWidget::ProjectionType::ORTHOGRAPHIC,
-                           MyOpenGLWidget::ProjectionSurface::Y);
-    OrthoOpenGLWidgets[1]->setFormat(format);
-    OrthoOpenGLWidgets[2] =
-        new MyOpenGLWidget(MyOpenGLWidget::ProjectionType::ORTHOGRAPHIC,
-                           MyOpenGLWidget::ProjectionSurface::Z);
-    OrthoOpenGLWidgets[2]->setFormat(format);
+    auto i = 0UL;
+    for (auto projSurface : MyOpenGLWidget::GetProjectionSurfaces()) {
+        OrthoOpenGLWidgets[i] =
+            new MyOpenGLWidget(MyOpenGLWidget::ProjectionType::ORTHOGRAPHIC,
+                               projSurface);
+        OrthoOpenGLWidgets[i]->setFormat(format);
+        i++;
+    }
 
     auto initWidget = [this](MyOpenGLWidget* openGLWidget) {
         // set connection for redraw on scale changed
