@@ -43,9 +43,4 @@ void Pyramid::GenerateVertices() {
         Vertices.emplace_back(createVertex(TopRadius, Height, i + 1));
         Vertices.emplace_back(createVertex(BaseRadius, 0, i + 1));
     }
-
-    for (auto v : Vertices) {
-        qDebug() << v.GetPositon();
-    }
-    qDebug() << "__________________________";
 }
