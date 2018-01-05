@@ -16,16 +16,22 @@ public:
     using SizeType = std::size_t;
     using LenghtType = float;
 
-    Pyramid(SizeType facesCount, LenghtType radius, LenghtType height);
+    Pyramid(SizeType facesCount,
+            LenghtType baseRadius,
+            LenghtType topRadius,
+            LenghtType height);
 
     SizeType GetVerticesCount() const;
+    SizeType GetFacesCount() const;
+    SizeType GetVertexPerOnce() const { return 4; }
     const Vertex* GetData() const;
 
 private:
     void GenerateVertices();
 
     SizeType FacesCount;
-    LenghtType Radius;
+    LenghtType BaseRadius;
+    LenghtType TopRadius;
     LenghtType Height;
     std::vector<Vertex> Vertices;
 };

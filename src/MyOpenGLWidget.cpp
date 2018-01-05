@@ -29,7 +29,7 @@ MyOpenGLWidget::MyOpenGLWidget(ProjectionType projType,
                                ProjectionSurface projSurface,
                                QWidget* parent)
     : QOpenGLWidget(parent),
-      Pyramid8Faces{8, 0.9f, 0.9f},
+      Pyramid8Faces{8, 0.6f, 0.3f, 0.9f},
       ScaleFactor{1.0f},
       AngleOX{0},
       AngleOY{0},
@@ -143,8 +143,10 @@ void MyOpenGLWidget::paintGL() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     VertexArray->bind();
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, Pyramid8Faces.GetVerticesCount());
+    for (auto i = 0U; i < Pyramid8Faces.GetFacesCount(); i++) {
+        glDrawArrays(GL_LINE_LOOP, i * Pyramid8Faces.GetVertexPerOnce(),
+                     Pyramid8Faces.GetVertexPerOnce());
+    }
     VertexArray->release();
 
     ShaderProgram->release();
