@@ -24,10 +24,32 @@ public:
     using FloatType = float;
     enum class ProjectionType { ORTHOGRAPHIC, ISOMETRIC, NO_PROJECTION };
     enum class ProjectionSurface : int { X, Y, Z, NO_SURFACE };
+    enum class IsometricProjType {
+        M_PHI_M_TETA,
+        M_PHI_P_TETA,
+        P_PHI_M_TETA,
+        P_PHI_P_TETA,
+        NO_TYPE
+    };
+
+    explicit MyOpenGLWidget(QWidget* parent = nullptr);
+    explicit MyOpenGLWidget(ProjectionType projType,
+                            ProjectionSurface projSurface,
+                            QWidget* parent = nullptr);
+    explicit MyOpenGLWidget(ProjectionType projType,
+                            IsometricProjType isoProjType,
+                            QWidget* parent = nullptr);
 
     static constexpr std::array<ProjectionType, 2>
     GetProjectionTypes() noexcept {
         return {ProjectionType::ORTHOGRAPHIC, ProjectionType::ISOMETRIC};
+    }
+
+    static constexpr std::array<IsometricProjType, 4>
+    GetIsoProjTypes() noexcept {
+        return {
+            IsometricProjType::M_PHI_M_TETA, IsometricProjType::M_PHI_P_TETA,
+            IsometricProjType::P_PHI_M_TETA, IsometricProjType::P_PHI_P_TETA};
     }
 
     static constexpr std::array<ProjectionSurface, 3>
@@ -35,11 +57,6 @@ public:
         return {ProjectionSurface::X, ProjectionSurface::Y,
                 ProjectionSurface::Z};
     }
-
-    explicit MyOpenGLWidget(QWidget* parent = nullptr);
-    explicit MyOpenGLWidget(ProjectionType projType,
-                            ProjectionSurface projSurface,
-                            QWidget* parent = nullptr);
 
 public slots:
     void ScaleUpSlot();
@@ -92,9 +109,11 @@ private:
     static QMatrix4x4 GenerateRotateMatrixByAngle(RotateType rotateType,
                                                   FloatType angle);
     static QMatrix4x4 GenerateProjectionMatrix(ProjectionType projType,
-                                               ProjectionSurface projSurface);
+                                               ProjectionSurface projSurface,
+                                               IsometricProjType isoProjType);
     static QMatrix4x4 GenerateMoveToXYMatrix(ProjectionType projType,
-                                             ProjectionSurface projSurface);
+                                             ProjectionSurface projSurface,
+                                             IsometricProjType isoProjType);
 
     QOpenGLShaderProgram* ShaderProgram;
     QOpenGLBuffer* Buffer;
@@ -106,6 +125,7 @@ private:
     FloatType AngleOZ;
     ProjectionType ProjType;
     ProjectionSurface ProjSurface;
+    IsometricProjType IsoProjType;
 };
 
 #endif  // CG_LAB_MYOPENGLWIDGET_HPP_

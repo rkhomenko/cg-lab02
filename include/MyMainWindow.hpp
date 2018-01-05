@@ -29,6 +29,7 @@ private:
     QWidget* CreateCentralWidget();
 
     std::array<MyOpenGLWidget*, 3> OrthoOpenGLWidgets;
+    std::array<MyOpenGLWidget*, 4> IsoOpenGLWidgets;
     MyControlWidget* ControlWidget;
 };
 

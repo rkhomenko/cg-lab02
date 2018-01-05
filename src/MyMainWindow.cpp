@@ -33,6 +33,14 @@ MyMainWindow::MyMainWindow(QWidget* parent) : QMainWindow(parent) {
         i++;
     }
 
+    i = 0UL;
+    for (auto isoProjType : MyOpenGLWidget::GetIsoProjTypes()) {
+        IsoOpenGLWidgets[i] = new MyOpenGLWidget(
+            MyOpenGLWidget::ProjectionType ::ISOMETRIC, isoProjType);
+        IsoOpenGLWidgets[i]->setFormat(format);
+        i++;
+    }
+
     auto initWidget = [this](MyOpenGLWidget* openGLWidget) {
         // set connection for redraw on scale changed
         connect(ControlWidget, &MyControlWidget::ScaleUpSignal, openGLWidget,
@@ -53,11 +61,18 @@ MyMainWindow::MyMainWindow(QWidget* parent) : QMainWindow(parent) {
         initWidget(ptr);
     }
 
+    for (auto ptr : IsoOpenGLWidgets) {
+        initWidget(ptr);
+    }
+
     setCentralWidget(CreateCentralWidget());
 }
 
 MyMainWindow::~MyMainWindow() {
     for (auto ptr : OrthoOpenGLWidgets) {
+        delete ptr;
+    }
+    for (auto ptr : IsoOpenGLWidgets) {
         delete ptr;
     }
     delete ControlWidget;
@@ -97,8 +112,13 @@ QWidget* MyMainWindow::CreateCentralWidget() {
             createOpenGLWidgetWithLabel(OrthoOpenGLWidgets[i++], projInfo));
     }
 
+    std::vector<const char*> isoProjInfoArray = {"- -", "- +", "+ -", "++"};
     auto isometricWidgetsLayout = new QHBoxLayout;
-    // TODO: add isometric projection widgets
+    i = 0;
+    for (auto projInfo : isoProjInfoArray) {
+        isometricWidgetsLayout->addLayout(
+            createOpenGLWidgetWithLabel(IsoOpenGLWidgets[i++], projInfo));
+    }
 
     auto createWidgetWithLayout = [](QLayout* layout) {
         auto widget = new QWidget;

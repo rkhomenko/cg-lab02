@@ -35,11 +35,19 @@ MyOpenGLWidget::MyOpenGLWidget(ProjectionType projType,
       AngleOY{0},
       AngleOZ{0},
       ProjType{projType},
-      ProjSurface{projSurface} {
+      ProjSurface{projSurface},
+      IsoProjType{IsometricProjType::NO_TYPE} {
     auto sizePolicy =
         QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setSizePolicy(sizePolicy);
     setMinimumSize(DEFAULT_SIZE);
+}
+
+MyOpenGLWidget::MyOpenGLWidget(ProjectionType projType,
+                               IsometricProjType isoProjType,
+                               QWidget* parent)
+    : MyOpenGLWidget(projType, ProjectionSurface::NO_SURFACE, parent) {
+    IsoProjType = isoProjType;
 }
 
 void MyOpenGLWidget::ScaleUpSlot() {
@@ -110,10 +118,12 @@ void MyOpenGLWidget::initializeGL() {
     SetUniformMatrix(ROTATE_OX_MATRIX, GenerateRotateMatrix(RotateType::OX));
     SetUniformMatrix(ROTATE_OY_MATRIX, GenerateRotateMatrix(RotateType::OY));
     SetUniformMatrix(ROTATE_OZ_MATRIX, GenerateRotateMatrix(RotateType::OZ));
-    SetUniformMatrix(PROJECTION_MATRIX,
-                     GenerateProjectionMatrix(ProjType, ProjSurface));
-    SetUniformMatrix(MOVE_TO_XY_MATRIX,
-                     GenerateMoveToXYMatrix(ProjType, ProjSurface));
+    SetUniformMatrix(
+        PROJECTION_MATRIX,
+        GenerateProjectionMatrix(ProjType, ProjSurface, IsoProjType));
+    SetUniformMatrix(
+        MOVE_TO_XY_MATRIX,
+        GenerateMoveToXYMatrix(ProjType, ProjSurface, IsoProjType));
 
     VertexArray->release();
     Buffer->release();
@@ -286,21 +296,53 @@ QMatrix4x4 MyOpenGLWidget::GenerateRotateMatrixByAngle(RotateType rotateType,
 
 QMatrix4x4 MyOpenGLWidget::GenerateProjectionMatrix(
     ProjectionType projType,
-    ProjectionSurface projSurface) {
+    ProjectionSurface projSurface,
+    IsometricProjType isoProjType) {
     const auto X_COORD = 0;
     const auto Y_COORD = 1;
     const auto Z_COORD = 2;
-    const FloatType orthoMatrixData[] = {
+    const FloatType eMatrixData[] = {
         1, 0, 0, 0,  // first line
         0, 1, 0, 0,  // second line
         0, 0, 1, 0,  // third line
         0, 0, 0, 1   // fourth line
     };
 
+    auto toRadians = [](float degrees) {
+        return degrees / 180 * (4 * std::atan(1.0f));
+    };
+
+    const auto PHI = toRadians(45.0f);
+    const auto TETA = toRadians(36.26f);
+
+    auto generateIsoProjMatrix = [](float phi, float teta) {
+        float isoProjMatrixData[] = {
+            std::cos(phi),
+            std::cos(phi) * std::sin(teta),
+            0,
+            0,  // first line
+            0,
+            std::cos(teta),
+            0,
+            0,  // second line
+            std::sin(phi),
+            -std::cos(phi) * std::sin(teta),
+            0,
+            0,  // third line
+            0,
+            0,
+            0,
+            1  // fourth line
+        };
+        return QMatrix4x4(isoProjMatrixData);
+    };
+
+    float phi = 0;
+    float teta = 0;
     QMatrix4x4 projectionMatrix;
     switch (projType) {
         case ProjectionType::ORTHOGRAPHIC:
-            projectionMatrix = QMatrix4x4(orthoMatrixData);
+            projectionMatrix = QMatrix4x4(eMatrixData);
             switch (projSurface) {
                 case ProjectionSurface::X:
                     projectionMatrix(X_COORD, X_COORD) = 0;
@@ -316,6 +358,27 @@ QMatrix4x4 MyOpenGLWidget::GenerateProjectionMatrix(
             }
             break;
         case ProjectionType::ISOMETRIC:
+            switch (isoProjType) {
+                case IsometricProjType::M_PHI_M_TETA:
+                    phi = -PHI;
+                    teta = -TETA;
+                    break;
+                case IsometricProjType::M_PHI_P_TETA:
+                    phi = -PHI;
+                    teta = TETA;
+                    break;
+                case IsometricProjType::P_PHI_M_TETA:
+                    phi = PHI;
+                    teta = -TETA;
+                    break;
+                case IsometricProjType::P_PHI_P_TETA:
+                    phi = PHI;
+                    teta = TETA;
+                    break;
+                case IsometricProjType::NO_TYPE:
+                    break;
+            }
+            projectionMatrix = generateIsoProjMatrix(phi, teta);
             break;
         case ProjectionType::NO_PROJECTION:
             break;
@@ -326,7 +389,8 @@ QMatrix4x4 MyOpenGLWidget::GenerateProjectionMatrix(
 
 QMatrix4x4 MyOpenGLWidget::GenerateMoveToXYMatrix(
     ProjectionType projType,
-    ProjectionSurface projSurface) {
+    ProjectionSurface projSurface,
+    IsometricProjType isoProjType) {
     const auto PI = 4 * std::atan(1.0f);
     const FloatType eData[] = {
         1, 0, 0, 0,  // first line
@@ -356,6 +420,16 @@ QMatrix4x4 MyOpenGLWidget::GenerateMoveToXYMatrix(
             }
             break;
         case ProjectionType::ISOMETRIC:
+            switch (isoProjType) {
+                case IsometricProjType::M_PHI_M_TETA:
+                case IsometricProjType::M_PHI_P_TETA:
+                case IsometricProjType::P_PHI_M_TETA:
+                case IsometricProjType::P_PHI_P_TETA:
+                    moveToXYMatrix = E;
+                    break;
+                case IsometricProjType::NO_TYPE:
+                    break;
+            }
             break;
         case ProjectionType::NO_PROJECTION:
             break;
