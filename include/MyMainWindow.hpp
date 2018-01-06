@@ -11,7 +11,6 @@
 #include <array>
 
 class MyOpenGLWidget;
-class MyControlWidget;
 
 class MyMainWindow : public QMainWindow {
     Q_OBJECT
@@ -30,7 +29,6 @@ private:
 
     std::array<MyOpenGLWidget*, 3> OrthoOpenGLWidgets;
     std::array<MyOpenGLWidget*, 4> IsoOpenGLWidgets;
-    MyControlWidget* ControlWidget;
 };
 
 #endif  // CG_LAB_MYMAINWINDOW_HPP_

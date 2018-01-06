@@ -40,7 +40,7 @@ MyOpenGLWidget::MyOpenGLWidget(ProjectionType projType,
     auto sizePolicy =
         QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setSizePolicy(sizePolicy);
-    setMinimumSize(DEFAULT_SIZE);
+    setMinimumSize(WIDGET_DEFAULT_SIZE);
 }
 
 MyOpenGLWidget::MyOpenGLWidget(ProjectionType projType,
@@ -179,8 +179,8 @@ void MyOpenGLWidget::SetUniformMatrix(const char* uniformName,
 }
 
 QMatrix4x4 MyOpenGLWidget::GenerateScaleMatrix(int width, int height) const {
-    const auto DEFAULT_WIDTH = DEFAULT_SIZE.width();
-    const auto DEFAULT_HEIGHT = DEFAULT_SIZE.height();
+    const auto DEFAULT_WIDTH = IMAGE_DEFAULT_SIZE.width();
+    const auto DEFAULT_HEIGHT = IMAGE_DEFAULT_SIZE.height();
 
     auto xScaleFactor = 1.0f * DEFAULT_WIDTH / width;
     auto yScaleFactor = 1.0f * DEFAULT_HEIGHT / height;
