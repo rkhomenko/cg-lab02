@@ -310,17 +310,13 @@ QMatrix4x4 MyOpenGLWidget::GenerateProjectionMatrix(
         0, 0, 0, 1   // fourth line
     };
 
-    auto toRadians = [](float degrees) {
-        return degrees / 180 * (4 * std::atan(1.0f));
-    };
-
-    const auto PHI = toRadians(45.0f);
-    const auto TETA = toRadians(36.26f);
+    const auto PHI = std::asin(std::sqrt(2.0f) / 2);
+    const auto TETA = std::asin(std::sqrt(1.0f / 3));
 
     auto generateIsoProjMatrix = [](float phi, float teta) {
         float isoProjMatrixData[] = {
             std::cos(phi),
-            std::cos(phi) * std::sin(teta),
+            std::sin(phi) * std::sin(teta),
             0,
             0,  // first line
             0,
