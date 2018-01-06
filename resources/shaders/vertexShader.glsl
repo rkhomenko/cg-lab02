@@ -6,6 +6,7 @@
 #version 330
 attribute highp vec4 position;
 
+uniform highp mat4x4 shiftMatrix;
 uniform highp mat4x4 scaleMatrix;
 uniform highp mat4x4 rotateOXMatrix;
 uniform highp mat4x4 rotateOYMatrix;
@@ -18,6 +19,7 @@ void main() {
                           rotateOYMatrix *
                           rotateOZMatrix;
     gl_Position = position *
+                  shiftMatrix *
                   rotateMatrix *
                   projectionMatrix *
                   moveToXYMatrix *

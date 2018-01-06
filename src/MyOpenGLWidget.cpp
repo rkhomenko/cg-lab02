@@ -115,6 +115,7 @@ void MyOpenGLWidget::initializeGL() {
     ShaderProgram->bind();
     ShaderProgram->setUniformValue(COLOR, color);
 
+    SetUniformMatrix(SHIFT_MATRIX, GenerateShiftMatrix());
     SetUniformMatrix(ROTATE_OX_MATRIX, GenerateRotateMatrix(RotateType::OX));
     SetUniformMatrix(ROTATE_OY_MATRIX, GenerateRotateMatrix(RotateType::OY));
     SetUniformMatrix(ROTATE_OZ_MATRIX, GenerateRotateMatrix(RotateType::OZ));
@@ -219,6 +220,17 @@ QMatrix4x4 MyOpenGLWidget::GenerateRotateMatrix(RotateType rotateType) const {
             break;
     }
     return GenerateRotateMatrixByAngle(rotateType, angle);
+}
+
+QMatrix4x4 MyOpenGLWidget::GenerateShiftMatrix() const {
+    const FloatType matrixData[] = {
+        1, 0, 0, 0, // first line
+        0, 1, 0, 0, // second line
+        0, 0, 1, 0, // third line
+        0, 0, -Pyramid8Faces.GetHeight() / 2, 1 // fourth
+    };
+
+    return QMatrix4x4(matrixData);
 }
 
 QMatrix4x4 MyOpenGLWidget::GenerateRotateMatrixByAngle(RotateType rotateType,

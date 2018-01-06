@@ -23,7 +23,8 @@ public:
 
     SizeType GetVerticesCount() const;
     SizeType GetFacesCount() const;
-    SizeType GetVertexPerOnce() const { return 4; }
+    SizeType GetVertexPerOnce() const;
+    LenghtType GetHeight() const;
     const Vertex* GetData() const;
 
 private:

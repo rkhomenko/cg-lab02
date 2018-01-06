@@ -89,6 +89,7 @@ private:
     static constexpr auto ROTATE_OZ_MATRIX = "rotateOZMatrix";
     static constexpr auto PROJECTION_MATRIX = "projectionMatrix";
     static constexpr auto MOVE_TO_XY_MATRIX = "moveToXYMatrix";
+    static constexpr auto SHIFT_MATRIX = "shiftMatrix";
 
     static constexpr auto SCALE_FACTOR_PER_ONCE = 1.15f;
 
@@ -105,6 +106,7 @@ private:
 
     QMatrix4x4 GenerateScaleMatrix(int width, int height) const;
     QMatrix4x4 GenerateRotateMatrix(RotateType rotateType) const;
+    QMatrix4x4 GenerateShiftMatrix() const;
 
     static QMatrix4x4 GenerateRotateMatrixByAngle(RotateType rotateType,
                                                   FloatType angle);

@@ -24,6 +24,14 @@ Pyramid::SizeType Pyramid::GetFacesCount() const {
     return FacesCount;
 }
 
+Pyramid::SizeType Pyramid::GetVertexPerOnce() const {
+    return 4;
+}
+
+Pyramid::LenghtType Pyramid::GetHeight() const {
+    return Height;
+}
+
 const Vertex* Pyramid::GetData() const {
     return Vertices.data();
 }
