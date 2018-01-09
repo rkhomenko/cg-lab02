@@ -23,18 +23,22 @@ MyMainWindow::MyMainWindow(QWidget* parent) : QMainWindow(parent) {
     format.setVersion(3, 3);
     format.setProfile(QSurfaceFormat::CoreProfile);
 
+    const QVector4D viewPoints[] = {
+        QVector4D{1, 0, 0, 1}, QVector4D{0, 1, 0, 1}, QVector4D{0, 0, 1, 1}};
     auto i = 0UL;
     for (auto projSurface : MyOpenGLWidget::GetProjectionSurfaces()) {
-        OrthoOpenGLWidgets[i] = new MyOpenGLWidget(
-            MyOpenGLWidget::ProjectionType::ORTHOGRAPHIC, projSurface);
+        OrthoOpenGLWidgets[i] =
+            new MyOpenGLWidget(MyOpenGLWidget::ProjectionType::ORTHOGRAPHIC,
+                               projSurface, viewPoints[i]);
         OrthoOpenGLWidgets[i]->setFormat(format);
         i++;
     }
 
     i = 0UL;
     for (auto isoProjType : MyOpenGLWidget::GetIsoProjTypes()) {
-        IsoOpenGLWidgets[i] = new MyOpenGLWidget(
-            MyOpenGLWidget::ProjectionType ::ISOMETRIC, isoProjType);
+        IsoOpenGLWidgets[i] =
+            new MyOpenGLWidget(MyOpenGLWidget::ProjectionType ::ISOMETRIC,
+                               isoProjType, viewPoints[i]);
         IsoOpenGLWidgets[i]->setFormat(format);
         i++;
     }

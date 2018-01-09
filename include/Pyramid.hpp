@@ -15,6 +15,28 @@ class Pyramid {
 public:
     using SizeType = std::size_t;
     using LenghtType = float;
+    using VertexVector = std::vector<Vertex>;
+
+    class Surface {
+    public:
+        enum class SurfaceType { BASE, FACE };
+
+        Surface() = default;
+        Surface(SurfaceType type, const VertexVector& data)
+            : Type{type}, Data{data} {}
+
+        Vertex GetCenter() const;
+        SurfaceType GetType() const { return Type; };
+        SizeType GetVerticesCount() const { return Data.size(); }
+
+        const VertexVector& GetVertices() const;
+
+    private:
+        SurfaceType Type;
+        VertexVector Data;
+    };
+
+    using SurfaceVector = std::vector<Surface>;
 
     Pyramid(SizeType facesCount,
             LenghtType baseRadius,
@@ -22,19 +44,22 @@ public:
             LenghtType height);
 
     SizeType GetVerticesCount() const;
-    SizeType GetFacesCount() const;
-    SizeType GetVertexPerOnce() const;
-    LenghtType GetHeight() const;
-    const Vertex* GetData() const;
+    LenghtType GetHeight() const { return Height; }
+    SurfaceVector GenerateVertices(const QVector4D& viewPoint,
+                                   const QMatrix4x4& rotateAndShit,
+                                   const QMatrix4x4& projMoveScale) const;
 
 private:
-    void GenerateVertices();
+    static SurfaceVector ApplyMatrix(const SurfaceVector& surfaces,
+                                     const QMatrix4x4& matrix);
+    static void SortSurfaces(SurfaceVector& surfaces,
+                             const QVector4D& viewPoint);
 
     SizeType FacesCount;
     LenghtType BaseRadius;
     LenghtType TopRadius;
     LenghtType Height;
-    std::vector<Vertex> Vertices;
+    SurfaceVector Surfaces;
 };
 
 #endif  //  CG_LAB_PYRAMID_HPP_

@@ -35,9 +35,11 @@ public:
     explicit MyOpenGLWidget(QWidget* parent = nullptr);
     explicit MyOpenGLWidget(ProjectionType projType,
                             ProjectionSurface projSurface,
+                            const QVector4D& viewPoint,
                             QWidget* parent = nullptr);
     explicit MyOpenGLWidget(ProjectionType projType,
                             IsometricProjType isoProjType,
+                            const QVector4D& viewPoint,
                             QWidget* parent = nullptr);
 
     static constexpr std::array<ProjectionType, 2>
@@ -84,26 +86,11 @@ private:
     static constexpr auto FRAGMENT_SHADER = ":/shaders/fragmentShader.glsl";
     static constexpr auto POSITION = "position";
     static constexpr auto COLOR = "color";
-    static constexpr auto SCALE_MATRIX = "scaleMatrix";
-    static constexpr auto ROTATE_OX_MATRIX = "rotateOXMatrix";
-    static constexpr auto ROTATE_OY_MATRIX = "rotateOYMatrix";
-    static constexpr auto ROTATE_OZ_MATRIX = "rotateOZMatrix";
-    static constexpr auto PROJECTION_MATRIX = "projectionMatrix";
-    static constexpr auto MOVE_TO_XY_MATRIX = "moveToXYMatrix";
-    static constexpr auto SHIFT_MATRIX = "shiftMatrix";
 
     static constexpr auto SCALE_FACTOR_PER_ONCE = 1.15f;
 
-    template <class Func, class... Args>
-    void RegenerateMatrix(const char* matrixName, Func generate, Args... args) {
-        SetUniformMatrix(matrixName, std::invoke(generate, this, args...));
-        update();
-        OnWidgetUpdate();
-    }
-
+    void UpdateOnChange(int width, int height);
     void OnWidgetUpdate();
-    void UpdateScaleMatrix();
-    void SetUniformMatrix(const char* uniformName, const QMatrix4x4& matrix);
 
     QMatrix4x4 GenerateScaleMatrix(int width, int height) const;
     QMatrix4x4 GenerateRotateMatrix(RotateType rotateType) const;
@@ -129,6 +116,8 @@ private:
     ProjectionType ProjType;
     ProjectionSurface ProjSurface;
     IsometricProjType IsoProjType;
+    QVector4D ViewPoint;
+    Pyramid::SurfaceVector Surfaces;
 };
 
 #endif  // CG_LAB_MYOPENGLWIDGET_HPP_

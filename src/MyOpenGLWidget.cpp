@@ -23,10 +23,12 @@
 MyOpenGLWidget::MyOpenGLWidget(QWidget* parent)
     : MyOpenGLWidget(ProjectionType::NO_PROJECTION,
                      ProjectionSurface::NO_SURFACE,
+                     QVector4D(0, 0, 0, 0),
                      parent) {}
 
 MyOpenGLWidget::MyOpenGLWidget(ProjectionType projType,
                                ProjectionSurface projSurface,
+                               const QVector4D& viewPoint,
                                QWidget* parent)
     : QOpenGLWidget(parent),
       Pyramid8Faces{8, 0.6f, 0.3f, 0.9f},
@@ -36,7 +38,8 @@ MyOpenGLWidget::MyOpenGLWidget(ProjectionType projType,
       AngleOZ{0},
       ProjType{projType},
       ProjSurface{projSurface},
-      IsoProjType{IsometricProjType::NO_TYPE} {
+      IsoProjType{IsometricProjType::NO_TYPE},
+      ViewPoint{viewPoint} {
     auto sizePolicy =
         QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setSizePolicy(sizePolicy);
@@ -45,37 +48,43 @@ MyOpenGLWidget::MyOpenGLWidget(ProjectionType projType,
 
 MyOpenGLWidget::MyOpenGLWidget(ProjectionType projType,
                                IsometricProjType isoProjType,
+                               const QVector4D& viewPoint,
                                QWidget* parent)
-    : MyOpenGLWidget(projType, ProjectionSurface::NO_SURFACE, parent) {
+    : MyOpenGLWidget(projType,
+                     ProjectionSurface::NO_SURFACE,
+                     viewPoint,
+                     parent) {
     IsoProjType = isoProjType;
 }
 
 void MyOpenGLWidget::ScaleUpSlot() {
     ScaleFactor *= SCALE_FACTOR_PER_ONCE;
-    UpdateScaleMatrix();
+    UpdateOnChange(width(), height());
+    OnWidgetUpdate();
 }
 
 void MyOpenGLWidget::ScaleDownSlot() {
     ScaleFactor /= SCALE_FACTOR_PER_ONCE;
-    UpdateScaleMatrix();
+    UpdateOnChange(width(), height());
+    OnWidgetUpdate();
 }
 
 void MyOpenGLWidget::OXAngleChangedSlot(FloatType angle) {
     AngleOX = angle;
-    RegenerateMatrix(ROTATE_OX_MATRIX, &MyOpenGLWidget::GenerateRotateMatrix,
-                     RotateType::OX);
+    UpdateOnChange(width(), height());
+    OnWidgetUpdate();
 }
 
 void MyOpenGLWidget::OYAngleChangedSlot(FloatType angle) {
     AngleOY = angle;
-    RegenerateMatrix(ROTATE_OY_MATRIX, &MyOpenGLWidget::GenerateRotateMatrix,
-                     RotateType::OY);
+    UpdateOnChange(width(), height());
+    OnWidgetUpdate();
 }
 
 void MyOpenGLWidget::OZAngleChangedSlot(FloatType angle) {
     AngleOZ = angle;
-    RegenerateMatrix(ROTATE_OZ_MATRIX, &MyOpenGLWidget::GenerateRotateMatrix,
-                     RotateType::OZ);
+    UpdateOnChange(width(), height());
+    OnWidgetUpdate();
 }
 
 void MyOpenGLWidget::initializeGL() {
@@ -98,9 +107,17 @@ void MyOpenGLWidget::initializeGL() {
     Buffer = new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
     Buffer->create();
     Buffer->bind();
-    Buffer->setUsagePattern(QOpenGLBuffer::StaticDraw);
-    Buffer->allocate(Pyramid8Faces.GetData(),
-                     sizeof(Vertex) * Pyramid8Faces.GetVerticesCount());
+    Buffer->setUsagePattern(QOpenGLBuffer::DynamicDraw);
+    UpdateOnChange(width(), height());
+    Buffer->allocate(sizeof(Vertex) * Pyramid8Faces.GetVerticesCount());
+
+    int offset = 0;
+    for (auto&& surface : Surfaces) {
+        auto& vertices = surface.GetVertices();
+        auto bytes = vertices.size() * sizeof(Vertex);
+        Buffer->write(offset, vertices.data(), bytes);
+        offset += bytes;
+    }
 
     VertexArray = new QOpenGLVertexArrayObject;
     VertexArray->create();
@@ -115,24 +132,13 @@ void MyOpenGLWidget::initializeGL() {
     ShaderProgram->bind();
     ShaderProgram->setUniformValue(COLOR, color);
 
-    SetUniformMatrix(SHIFT_MATRIX, GenerateShiftMatrix());
-    SetUniformMatrix(ROTATE_OX_MATRIX, GenerateRotateMatrix(RotateType::OX));
-    SetUniformMatrix(ROTATE_OY_MATRIX, GenerateRotateMatrix(RotateType::OY));
-    SetUniformMatrix(ROTATE_OZ_MATRIX, GenerateRotateMatrix(RotateType::OZ));
-    SetUniformMatrix(
-        PROJECTION_MATRIX,
-        GenerateProjectionMatrix(ProjType, ProjSurface, IsoProjType));
-    SetUniformMatrix(
-        MOVE_TO_XY_MATRIX,
-        GenerateMoveToXYMatrix(ProjType, ProjSurface, IsoProjType));
-
     VertexArray->release();
     Buffer->release();
     ShaderProgram->release();
 }
 
 void MyOpenGLWidget::resizeGL(int width, int height) {
-    SetUniformMatrix(SCALE_MATRIX, GenerateScaleMatrix(width, height));
+    UpdateOnChange(width, height);
 }
 
 void MyOpenGLWidget::paintGL() {
@@ -143,13 +149,41 @@ void MyOpenGLWidget::paintGL() {
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    VertexArray->bind();
-    for (auto i = 0U; i < Pyramid8Faces.GetFacesCount(); i++) {
-        glDrawArrays(GL_LINE_LOOP, i * Pyramid8Faces.GetVertexPerOnce(),
-                     Pyramid8Faces.GetVertexPerOnce());
+    Buffer->bind();
+    int offset = 0;
+    for (auto&& surface : Surfaces) {
+        auto& vertices = surface.GetVertices();
+        auto bytes = vertices.size() * sizeof(Vertex);
+        Buffer->write(offset, vertices.data(), bytes);
+        offset += bytes;
     }
-    VertexArray->release();
+    Buffer->release();
 
+    VertexArray->bind();
+
+    offset = 0;
+    for (auto&& surface : Surfaces) {
+        int count = surface.GetVerticesCount();
+        ShaderProgram->setUniformValue(COLOR, QVector4D(0, 0, 0, 1));
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        if (count < 8) {
+            glDrawArrays(GL_TRIANGLES, offset, 3);
+            glDrawArrays(GL_TRIANGLES, offset + 2, 3);
+        } else {
+            glDrawArrays(GL_TRIANGLE_FAN, offset, count);
+            // count - 2: triangles count for drawing
+        }
+        ShaderProgram->setUniformValue(COLOR, QVector4D(0, 0, 1, 1));
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        if (count < 8) {
+            glDrawArrays(GL_LINE_STRIP, offset, count);
+        } else {
+            glDrawArrays(GL_LINE_STRIP, offset + 1, count - 1);
+        }
+        offset += count;
+    }
+
+    VertexArray->release();
     ShaderProgram->release();
 }
 
@@ -161,21 +195,30 @@ void MyOpenGLWidget::CleanUp() {
     delete ShaderProgram;
 }
 
+void MyOpenGLWidget::UpdateOnChange(int width, int height) {
+    const auto shiftMatrix = GenerateShiftMatrix();
+    const auto rotateMatrix = GenerateRotateMatrix(RotateType::OX) *
+                              GenerateRotateMatrix(RotateType::OY) *
+                              GenerateRotateMatrix(RotateType::OZ);
+    const auto projectionMatrix =
+        GenerateProjectionMatrix(ProjType, ProjSurface, IsoProjType);
+    const auto moveToXYMatrix =
+        GenerateMoveToXYMatrix(ProjType, ProjSurface, IsoProjType);
+    const auto scaleMatrix = GenerateScaleMatrix(width, height);
+    const auto rotateAndShiftMatrix = shiftMatrix * rotateMatrix;
+    const auto projMoveScaleMatrix =
+        projectionMatrix * moveToXYMatrix * scaleMatrix;
+
+    auto viewPoint = ViewPoint * shiftMatrix;
+
+    const auto surfaces = Pyramid8Faces.GenerateVertices(
+        viewPoint, rotateAndShiftMatrix, projMoveScaleMatrix);
+    Surfaces = surfaces;
+}
+
 void MyOpenGLWidget::OnWidgetUpdate() {
     auto event = new QResizeEvent(size(), size());
     QOpenGLWidget::event(event);
-}
-
-void MyOpenGLWidget::UpdateScaleMatrix() {
-    RegenerateMatrix(SCALE_MATRIX, &MyOpenGLWidget::GenerateScaleMatrix,
-                     width(), height());
-}
-
-void MyOpenGLWidget::SetUniformMatrix(const char* uniformName,
-                                      const QMatrix4x4& matrix) {
-    ShaderProgram->bind();
-    ShaderProgram->setUniformValue(uniformName, matrix);
-    ShaderProgram->release();
 }
 
 QMatrix4x4 MyOpenGLWidget::GenerateScaleMatrix(int width, int height) const {
@@ -224,10 +267,14 @@ QMatrix4x4 MyOpenGLWidget::GenerateRotateMatrix(RotateType rotateType) const {
 
 QMatrix4x4 MyOpenGLWidget::GenerateShiftMatrix() const {
     const FloatType matrixData[] = {
-        1, 0, 0, 0, // first line
-        0, 1, 0, 0, // second line
-        0, 0, 1, 0, // third line
-        0, 0, -Pyramid8Faces.GetHeight() / 2, 1 // fourth
+        1, 0, 0,
+        0,  // first line
+        0, 1, 0,
+        0,  // second line
+        0, 0, 1,
+        0,  // third line
+        0, 0, -Pyramid8Faces.GetHeight() / 2,
+        1  // fourth
     };
 
     return QMatrix4x4(matrixData);

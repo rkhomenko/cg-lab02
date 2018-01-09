@@ -4,9 +4,9 @@ project(cg-lab02 VERSION 0.1.0 LANGUAGES CXX)
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
    "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -isystem")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -DDEBUG")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g -DDEBUG")
 else()
     # Realization of MSVC compiler support
     message(FATAL_ERROR "You are seriously, man? Use GNU or Clang compiler or go away!")
@@ -35,13 +35,10 @@ include_directories(${Qt5Widgets_INCLUDE_DIRS})
 qt5_add_resources(RESOURCES ${RESOURCES_FILE})
 qt5_wrap_ui(UI_INCLUDES ${UI_FILE})
 
-if (NOT EIGEN3_INCLUDE_DIR)
-    message(FATAL_ERROR "Variable EIGEN3_INCLUDE_DIR doesn't set!")
-endif()
-include_directories(${EIGEN3_INCLUDE_DIR})
+find_package(OpenGL REQUIRED)
 
 add_executable(${PROJECT_NAME} ${INCLUDES} ${UI_INCLUDES}
                                ${SOURCES}
                                ${RESOURCES})
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
-target_link_libraries(${PROJECT_NAME} Qt5::Widgets)
+target_link_libraries(${PROJECT_NAME} Qt5::Widgets ${OPENGL_LIBRARIES})

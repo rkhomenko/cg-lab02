@@ -26,7 +26,7 @@ public:
     constexpr Vertex(ConstReferencePositionType position)
         : Position{position} {}
 
-    constexpr ConstReferencePositionType GetPositon() const { return Position; }
+    constexpr ConstReferencePositionType GetPosition() const { return Position; }
 
     static constexpr IntType GetTupleSize() { return TUPLE_SIZE; }
     static constexpr IntType GetOffset() { return offsetof(Vertex, Position); }
