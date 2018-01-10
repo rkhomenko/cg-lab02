@@ -35,6 +35,11 @@ include_directories(${Qt5Widgets_INCLUDE_DIRS})
 qt5_add_resources(RESOURCES ${RESOURCES_FILE})
 qt5_wrap_ui(UI_INCLUDES ${UI_FILE})
 
+if(EIGEN3_INCLUDE_DIR)
+    add_definitions(-DEIGEN3_INCLUDE_DIR)
+    include_directories(${EIGEN3_INCLUDE_DIR})
+endif()
+
 add_executable(${PROJECT_NAME} ${INCLUDES} ${UI_INCLUDES}
                                ${SOURCES}
                                ${RESOURCES})

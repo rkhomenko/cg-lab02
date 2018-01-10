@@ -11,7 +11,11 @@
 #include <cstdint>
 #include <vector>
 
+#ifdef EIGEN3_INCLUDE_DIR
+#include <Eigen/Dense>
+#else
 #include <eigen3/Eigen/Dense>
+#endif
 
 using Vec3 = Eigen::Matrix<float, 1, 3>;
 using Vec4 = Eigen::Matrix<float, 1, 4>;

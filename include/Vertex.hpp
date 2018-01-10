@@ -6,7 +6,12 @@
 #ifndef CG_LAB_VERTEX_HPP_
 #define CG_LAB_VERTEX_HPP_
 
+#ifdef EIGEN3_INCLUDE_DIR
+#include <Eigen/Dense>
+#else
 #include <eigen3/Eigen/Dense>
+#endif
+
 
 template <typename T, typename U>
 constexpr size_t offsetofImpl(T const* t, U T::*a) {
