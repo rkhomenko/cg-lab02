@@ -209,7 +209,47 @@ void MyOpenGLWidget::UpdateOnChange(int width, int height) {
     const auto projMoveScaleMatrix =
         projectionMatrix * moveToXYMatrix * scaleMatrix;
 
-    auto viewPoint = ViewPoint * shiftMatrix;
+    const auto PHI = std::asin(std::sqrt(2.0f) / 2);
+    const auto TETA = std::asin(std::sqrt(1.0f / 3));
+
+    auto phi = 0.0f;
+    auto teta = 0.0f;
+    switch (IsoProjType) {
+        case IsometricProjType::M_PHI_M_TETA:
+            phi = -PHI;
+            teta = -TETA;
+            break;
+        case IsometricProjType::M_PHI_P_TETA:
+            phi = -PHI;
+            teta = TETA;
+            break;
+        case IsometricProjType::P_PHI_M_TETA:
+            phi = PHI;
+            teta = -TETA;
+            break;
+        case IsometricProjType::P_PHI_P_TETA:
+            phi = PHI;
+            teta = TETA;
+            break;
+        case IsometricProjType::NO_TYPE:
+            break;
+    }
+
+    QVector4D viewPoint;
+    switch (ProjType) {
+        case ProjectionType::ORTHOGRAPHIC:
+            viewPoint = ViewPoint * shiftMatrix;
+            break;
+
+        case ProjectionType::ISOMETRIC:
+            viewPoint = ViewPoint *
+                        GenerateRotateMatrixByAngle(RotateType::OY, phi) *
+                        GenerateRotateMatrixByAngle(RotateType::OZ, teta);
+            break;
+        case ProjectionType::NO_PROJECTION:
+            viewPoint = ViewPoint * shiftMatrix;
+            break;
+    }
 
     const auto surfaces = Pyramid8Faces.GenerateVertices(
         viewPoint, rotateAndShiftMatrix, projMoveScaleMatrix);
