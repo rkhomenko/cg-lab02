@@ -1,4 +1,4 @@
-# Created by https://www.gitignore.io/api/qt,c++,cmake,qtcreator
+# Created by https://www.gitignore.io/api/qt,vim,c++,qtcreator
 
 ### C++ ###
 # Prerequisites
@@ -33,18 +33,6 @@
 *.exe
 *.out
 *.app
-
-### CMake ###
-CMakeCache.txt
-CMakeFiles
-CMakeScripts
-Testing
-Makefile
-cmake_install.cmake
-install_manifest.txt
-compile_commands.json
-CTestTestfile.cmake
-build
 
 ### Qt ###
 # C++ objects and libs
@@ -105,4 +93,17 @@ CMakeLists.txt.user*
 
 # Qt Creator backups
 
-# End of https://www.gitignore.io/api/qt,c++,cmake,qtcreator
+### Vim ###
+# swap
+.sw[a-p]
+.*.sw[a-p]
+# session
+Session.vim
+# temporary
+.netrwhist
+*~
+# auto-generated tag files
+tags
+
+
+# End of https://www.gitignore.io/api/qt,vim,c++,qtcreator
