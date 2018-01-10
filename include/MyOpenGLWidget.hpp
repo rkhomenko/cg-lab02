@@ -35,11 +35,11 @@ public:
     explicit MyOpenGLWidget(QWidget* parent = nullptr);
     explicit MyOpenGLWidget(ProjectionType projType,
                             ProjectionSurface projSurface,
-                            const QVector4D& viewPoint,
+                            const Vec4& viewPoint,
                             QWidget* parent = nullptr);
     explicit MyOpenGLWidget(ProjectionType projType,
                             IsometricProjType isoProjType,
-                            const QVector4D& viewPoint,
+                            const Vec4& viewPoint,
                             QWidget* parent = nullptr);
 
     static constexpr std::array<ProjectionType, 2>
@@ -92,16 +92,16 @@ private:
     void UpdateOnChange(int width, int height);
     void OnWidgetUpdate();
 
-    QMatrix4x4 GenerateScaleMatrix(int width, int height) const;
-    QMatrix4x4 GenerateRotateMatrix(RotateType rotateType) const;
-    QMatrix4x4 GenerateShiftMatrix() const;
+    Mat4x4 GenerateScaleMatrix(int width, int height) const;
+    Mat4x4 GenerateRotateMatrix(RotateType rotateType) const;
+    Mat4x4 GenerateShiftMatrix() const;
 
-    static QMatrix4x4 GenerateRotateMatrixByAngle(RotateType rotateType,
+    static Mat4x4 GenerateRotateMatrixByAngle(RotateType rotateType,
                                                   FloatType angle);
-    static QMatrix4x4 GenerateProjectionMatrix(ProjectionType projType,
+    static Mat4x4 GenerateProjectionMatrix(ProjectionType projType,
                                                ProjectionSurface projSurface,
                                                IsometricProjType isoProjType);
-    static QMatrix4x4 GenerateMoveToXYMatrix(ProjectionType projType,
+    static Mat4x4 GenerateMoveToXYMatrix(ProjectionType projType,
                                              ProjectionSurface projSurface,
                                              IsometricProjType isoProjType);
 
@@ -116,7 +116,7 @@ private:
     ProjectionType ProjType;
     ProjectionSurface ProjSurface;
     IsometricProjType IsoProjType;
-    QVector4D ViewPoint;
+    Vec4 ViewPoint;
     Pyramid::SurfaceVector Surfaces;
 };
 

@@ -7,8 +7,6 @@
 #include <MyMainWindow.hpp>
 #include <MyOpenGLWidget.hpp>
 
-#include <vector>
-
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QSurfaceFormat>
@@ -23,20 +21,18 @@ MyMainWindow::MyMainWindow(QWidget* parent) : QMainWindow(parent) {
     format.setVersion(3, 3);
     format.setProfile(QSurfaceFormat::CoreProfile);
 
-    const QVector4D orthoViewPoints[] = {
-        QVector4D{1, 0, 0, 1}, QVector4D{0, 1, 0, 1}, QVector4D{0, 0, 1, 1}};
+    const Vec4 orthoViewPoints[] = {Vec4{1, 0, 0, 1}, Vec4{0, 1, 0, 1},
+                                    Vec4{0, 0, 1, 1}};
     auto i = 0UL;
     for (auto projSurface : MyOpenGLWidget::GetProjectionSurfaces()) {
         OrthoOpenGLWidgets[i] =
             new MyOpenGLWidget(MyOpenGLWidget::ProjectionType::ORTHOGRAPHIC,
                                projSurface, orthoViewPoints[i]);
-        OrthoOpenGLWidgets[i]->setFormat(format);
-        i++;
+        OrthoOpenGLWidgets[i++]->setFormat(format);
     }
 
-    const QVector4D isoViewPoints[] = {
-        QVector4D{1, 0, 0, 1}, QVector4D{1, 0, 0, 1}, QVector4D{1, 0, 0, 1},
-        QVector4D{1, 0, 0, 1}};
+    const Vec4 isoViewPoints[] = {Vec4{1, -1, 1, 1}, Vec4{1, 1, 1, 1},
+                                  Vec4{1, 1, -1, 1}, Vec4{1, -1, -1, 1}};
     i = 0UL;
     for (auto isoProjType : MyOpenGLWidget::GetIsoProjTypes()) {
         IsoOpenGLWidgets[i] =

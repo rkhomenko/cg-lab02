@@ -11,6 +11,12 @@
 #include <cstdint>
 #include <vector>
 
+#include <eigen3/Eigen/Dense>
+
+using Vec3 = Eigen::Matrix<float, 1, 3>;
+using Vec4 = Eigen::Matrix<float, 1, 4>;
+using Mat4x4 = Eigen::Matrix<float, 4, 4>;
+
 class Pyramid {
 public:
     using SizeType = std::size_t;
@@ -25,11 +31,13 @@ public:
         Surface(SurfaceType type, const VertexVector& data)
             : Type{type}, Data{data} {}
 
-        Vertex GetCenter() const;
-        SurfaceType GetType() const { return Type; };
+        Vec3 GetNormal(const Vec3& center) const;
+        SurfaceType GetType() const { return Type; }
         SizeType GetVerticesCount() const { return Data.size(); }
 
         const VertexVector& GetVertices() const;
+
+        static Vec3 VertexToVec3(const Vertex& v);
 
     private:
         SurfaceType Type;
@@ -45,15 +53,16 @@ public:
 
     SizeType GetVerticesCount() const;
     LenghtType GetHeight() const { return Height; }
-    SurfaceVector GenerateVertices(const QVector4D& viewPoint,
-                                   const QMatrix4x4& rotateAndShit,
-                                   const QMatrix4x4& projMoveScale) const;
+    SurfaceVector GenerateVertices(const Vec4& viewPoint,
+                                   const Mat4x4& rotateAndShit,
+                                   const Mat4x4& projMoveScale) const;
 
 private:
     static SurfaceVector ApplyMatrix(const SurfaceVector& surfaces,
-                                     const QMatrix4x4& matrix);
-    static void SortSurfaces(SurfaceVector& surfaces,
-                             const QVector4D& viewPoint);
+                                     const Mat4x4& matrix);
+
+    SurfaceVector ApplySurfaces(const SurfaceVector& surfaces,
+                                const Vec4& viewPoint) const;
 
     SizeType FacesCount;
     LenghtType BaseRadius;

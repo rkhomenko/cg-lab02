@@ -35,10 +35,8 @@ include_directories(${Qt5Widgets_INCLUDE_DIRS})
 qt5_add_resources(RESOURCES ${RESOURCES_FILE})
 qt5_wrap_ui(UI_INCLUDES ${UI_FILE})
 
-find_package(OpenGL REQUIRED)
-
 add_executable(${PROJECT_NAME} ${INCLUDES} ${UI_INCLUDES}
                                ${SOURCES}
                                ${RESOURCES})
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
-target_link_libraries(${PROJECT_NAME} Qt5::Widgets ${OPENGL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} Qt5::Widgets)

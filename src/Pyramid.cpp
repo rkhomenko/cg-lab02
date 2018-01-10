@@ -1,11 +1,6 @@
 #include <Pyramid.hpp>
 
-#include <algorithm>
-#include <array>
 #include <cmath>
-#include <iostream>
-
-#include <QDebug>
 
 Pyramid::Pyramid(SizeType facesCount,
                  LenghtType baseRadius,
@@ -29,17 +24,14 @@ Pyramid::Pyramid(SizeType facesCount,
         face.emplace_back(createVertex(TopRadius, Height, i));
         face.emplace_back(createVertex(TopRadius, Height, i + 1));
         face.emplace_back(createVertex(BaseRadius, 0, i + 1));
-        face.emplace_back(createVertex(BaseRadius, 0, i));
         Surfaces.emplace_back(Surface::SurfaceType::FACE, face);
     }
 
     auto generateBase = [this, createVertex](auto radius, auto height) {
         VertexVector base;
-        base.emplace_back(createVertex(0, height, 0));
         for (auto i = 0U; i < FacesCount; i++) {
             base.emplace_back(createVertex(radius, height, i));
         }
-        base.emplace_back(createVertex(radius, height, 0));
         return base;
     };
 
@@ -62,16 +54,15 @@ Pyramid::SizeType Pyramid::GetVerticesCount() const {
 }
 
 Pyramid::SurfaceVector Pyramid::GenerateVertices(
-    const QVector4D& viewPoint,
-    const QMatrix4x4& rotateAndShit,
-    const QMatrix4x4& projMoveScale) const {
+    const Vec4& viewPoint,
+    const Mat4x4& rotateAndShit,
+    const Mat4x4& projMoveScale) const {
     auto surfaces = ApplyMatrix(Surfaces, rotateAndShit);
-    SortSurfaces(surfaces, viewPoint);
-    return ApplyMatrix(surfaces, projMoveScale);
+    return ApplyMatrix(ApplySurfaces(surfaces, viewPoint), projMoveScale);
 }
 
 Pyramid::SurfaceVector Pyramid::ApplyMatrix(const SurfaceVector& surfaces,
-                                            const QMatrix4x4& matrix) {
+                                            const Mat4x4& matrix) {
     SurfaceVector newSurfaces;
 
     for (auto&& surface : surfaces) {
@@ -85,32 +76,41 @@ Pyramid::SurfaceVector Pyramid::ApplyMatrix(const SurfaceVector& surfaces,
     return newSurfaces;
 }
 
-void Pyramid::SortSurfaces(SurfaceVector& surfaces,
-                           const QVector4D& viewPoint) {
-    auto getDistance = [](auto&& surface, auto&& point) {
-        auto middle = surface.GetCenter();
-        auto vec = middle.GetPosition() - point;
-        return vec.length();
-    };
+Pyramid::SurfaceVector Pyramid::ApplySurfaces(const SurfaceVector& surfaces,
+                                              const Vec4& viewPoint) const {
+    const auto center = Vec3(0, 0, 0);
+    auto point = Vec3(viewPoint[0], viewPoint[1], viewPoint[2]);
+    SurfaceVector result;
 
-    std::sort(surfaces.begin(), surfaces.end(),
-              [viewPoint, getDistance](auto&& left, auto&& right) {
-                  return getDistance(left, viewPoint) >=
-                         getDistance(right, viewPoint);
-              });
-}
-
-Vertex Pyramid::Surface::GetCenter() const {
-    Vertex result;
-
-    switch (Type) {
-        case SurfaceType::BASE: {
-            result = Data[0];
-        } break;
-        case SurfaceType::FACE: {
-            result = 1.0f / 2 * (Data[0].GetPosition() + Data[1].GetPosition());
-        } break;
+    for (auto&& surface : surfaces) {
+        Vec3 normal = surface.GetNormal(center);
+        float dotProduct = point.dot(normal);
+        if (dotProduct >= 0) {
+            result.emplace_back(surface);
+        }
     }
 
     return result;
+}
+
+Vec3 Pyramid::Surface::GetNormal(const Vec3& center) const {
+    auto first = VertexToVec3(Data[0]);
+    auto middle = VertexToVec3(Data[1]);
+    auto last = VertexToVec3(Data[2]);
+
+    Vec3 v1 = first - middle;
+    Vec3 v2 = last - middle;
+
+    Vec3 normal = v1.cross(v2);
+    normal.normalize();
+    if (Vec3 toCenterVec = center - middle; toCenterVec.dot(normal) > 0) {
+        normal *= -1.0f;
+    }
+
+    return normal;
+}
+
+Vec3 Pyramid::Surface::VertexToVec3(const Vertex& v) {
+    auto vec = v.GetPosition();
+    return Vec3(vec[0], vec[1], vec[2]);
 }

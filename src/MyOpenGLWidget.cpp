@@ -8,27 +8,28 @@
 #include <Pyramid.hpp>
 
 #include <cmath>
-#include <cstring>
-#include <vector>
 
 #include <QApplication>
 #include <QDebug>
-#include <QMatrix4x4>
 #include <QOpenGLBuffer>
 #include <QOpenGLContext>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLVertexArrayObject>
 #include <QResizeEvent>
 
+using namespace Eigen;
+
+using Map4x4 = Map<Matrix<float, 4, 4, RowMajor>>;
+
 MyOpenGLWidget::MyOpenGLWidget(QWidget* parent)
     : MyOpenGLWidget(ProjectionType::NO_PROJECTION,
                      ProjectionSurface::NO_SURFACE,
-                     QVector4D(0, 0, 0, 0),
+                     Vec4(0, 0, 0, 0),
                      parent) {}
 
 MyOpenGLWidget::MyOpenGLWidget(ProjectionType projType,
                                ProjectionSurface projSurface,
-                               const QVector4D& viewPoint,
+                               const Vec4& viewPoint,
                                QWidget* parent)
     : QOpenGLWidget(parent),
       Pyramid8Faces{8, 0.6f, 0.3f, 0.9f},
@@ -48,7 +49,7 @@ MyOpenGLWidget::MyOpenGLWidget(ProjectionType projType,
 
 MyOpenGLWidget::MyOpenGLWidget(ProjectionType projType,
                                IsometricProjType isoProjType,
-                               const QVector4D& viewPoint,
+                               const Vec4& viewPoint,
                                QWidget* parent)
     : MyOpenGLWidget(projType,
                      ProjectionSurface::NO_SURFACE,
@@ -150,37 +151,25 @@ void MyOpenGLWidget::paintGL() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     Buffer->bind();
-    int offset = 0;
-    for (auto&& surface : Surfaces) {
-        auto& vertices = surface.GetVertices();
-        auto bytes = vertices.size() * sizeof(Vertex);
-        Buffer->write(offset, vertices.data(), bytes);
-        offset += bytes;
+    {
+        int offset = 0;
+        for (auto&& surface : Surfaces) {
+            auto& vertices = surface.GetVertices();
+            auto bytes = vertices.size() * sizeof(Vertex);
+            Buffer->write(offset, vertices.data(), bytes);
+            offset += bytes;
+        }
     }
     Buffer->release();
 
     VertexArray->bind();
-
-    offset = 0;
-    for (auto&& surface : Surfaces) {
-        int count = surface.GetVerticesCount();
-        ShaderProgram->setUniformValue(COLOR, QVector4D(0, 0, 0, 1));
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        if (count < 8) {
-            glDrawArrays(GL_TRIANGLES, offset, 3);
-            glDrawArrays(GL_TRIANGLES, offset + 2, 3);
-        } else {
-            glDrawArrays(GL_TRIANGLE_FAN, offset, count);
-            // count - 2: triangles count for drawing
+    {
+        int offset = 0;
+        for (auto&& surface : Surfaces) {
+            int count = surface.GetVerticesCount();
+            glDrawArrays(GL_LINE_LOOP, offset, count);
+            offset += count;
         }
-        ShaderProgram->setUniformValue(COLOR, QVector4D(0, 0, 1, 1));
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        if (count < 8) {
-            glDrawArrays(GL_LINE_STRIP, offset, count);
-        } else {
-            glDrawArrays(GL_LINE_STRIP, offset + 1, count - 1);
-        }
-        offset += count;
     }
 
     VertexArray->release();
@@ -196,63 +185,21 @@ void MyOpenGLWidget::CleanUp() {
 }
 
 void MyOpenGLWidget::UpdateOnChange(int width, int height) {
-    const auto shiftMatrix = GenerateShiftMatrix();
-    const auto rotateMatrix = GenerateRotateMatrix(RotateType::OX) *
-                              GenerateRotateMatrix(RotateType::OY) *
-                              GenerateRotateMatrix(RotateType::OZ);
-    const auto projectionMatrix =
+    const Mat4x4 shiftMatrix = GenerateShiftMatrix();
+    const Mat4x4 rotateMatrix = GenerateRotateMatrix(RotateType::OX) *
+                                GenerateRotateMatrix(RotateType::OY) *
+                                GenerateRotateMatrix(RotateType::OZ);
+    const Mat4x4 projectionMatrix =
         GenerateProjectionMatrix(ProjType, ProjSurface, IsoProjType);
-    const auto moveToXYMatrix =
+    const Mat4x4 moveToXYMatrix =
         GenerateMoveToXYMatrix(ProjType, ProjSurface, IsoProjType);
-    const auto scaleMatrix = GenerateScaleMatrix(width, height);
-    const auto rotateAndShiftMatrix = shiftMatrix * rotateMatrix;
-    const auto projMoveScaleMatrix =
+    const Mat4x4 scaleMatrix = GenerateScaleMatrix(width, height);
+    const Mat4x4 rotateAndShiftMatrix = shiftMatrix * rotateMatrix;
+    const Mat4x4 projMoveScaleMatrix =
         projectionMatrix * moveToXYMatrix * scaleMatrix;
 
-    const auto PHI = std::asin(std::sqrt(2.0f) / 2);
-    const auto TETA = std::asin(std::sqrt(1.0f / 3));
-
-    auto phi = 0.0f;
-    auto teta = 0.0f;
-    switch (IsoProjType) {
-        case IsometricProjType::M_PHI_M_TETA:
-            phi = -PHI;
-            teta = -TETA;
-            break;
-        case IsometricProjType::M_PHI_P_TETA:
-            phi = -PHI;
-            teta = TETA;
-            break;
-        case IsometricProjType::P_PHI_M_TETA:
-            phi = PHI;
-            teta = -TETA;
-            break;
-        case IsometricProjType::P_PHI_P_TETA:
-            phi = PHI;
-            teta = TETA;
-            break;
-        case IsometricProjType::NO_TYPE:
-            break;
-    }
-
-    QVector4D viewPoint;
-    switch (ProjType) {
-        case ProjectionType::ORTHOGRAPHIC:
-            viewPoint = ViewPoint * shiftMatrix;
-            break;
-
-        case ProjectionType::ISOMETRIC:
-            viewPoint = ViewPoint *
-                        GenerateRotateMatrixByAngle(RotateType::OY, phi) *
-                        GenerateRotateMatrixByAngle(RotateType::OZ, teta);
-            break;
-        case ProjectionType::NO_PROJECTION:
-            viewPoint = ViewPoint * shiftMatrix;
-            break;
-    }
-
     const auto surfaces = Pyramid8Faces.GenerateVertices(
-        viewPoint, rotateAndShiftMatrix, projMoveScaleMatrix);
+        ViewPoint, rotateAndShiftMatrix, projMoveScaleMatrix);
     Surfaces = surfaces;
 }
 
@@ -261,7 +208,7 @@ void MyOpenGLWidget::OnWidgetUpdate() {
     QOpenGLWidget::event(event);
 }
 
-QMatrix4x4 MyOpenGLWidget::GenerateScaleMatrix(int width, int height) const {
+Mat4x4 MyOpenGLWidget::GenerateScaleMatrix(int width, int height) const {
     const auto DEFAULT_WIDTH = IMAGE_DEFAULT_SIZE.width();
     const auto DEFAULT_HEIGHT = IMAGE_DEFAULT_SIZE.height();
 
@@ -286,10 +233,11 @@ QMatrix4x4 MyOpenGLWidget::GenerateScaleMatrix(int width, int height) const {
         0.0f,
         1.0f  // fourth line
     };
-    return QMatrix4x4(matrixData);
+
+    return Map4x4(matrixData);
 }
 
-QMatrix4x4 MyOpenGLWidget::GenerateRotateMatrix(RotateType rotateType) const {
+Mat4x4 MyOpenGLWidget::GenerateRotateMatrix(RotateType rotateType) const {
     FloatType angle = 0;
     switch (rotateType) {
         case RotateType::OX:
@@ -305,8 +253,8 @@ QMatrix4x4 MyOpenGLWidget::GenerateRotateMatrix(RotateType rotateType) const {
     return GenerateRotateMatrixByAngle(rotateType, angle);
 }
 
-QMatrix4x4 MyOpenGLWidget::GenerateShiftMatrix() const {
-    const FloatType matrixData[] = {
+Mat4x4 MyOpenGLWidget::GenerateShiftMatrix() const {
+    FloatType matrixData[] = {
         1, 0, 0,
         0,  // first line
         0, 1, 0,
@@ -317,12 +265,12 @@ QMatrix4x4 MyOpenGLWidget::GenerateShiftMatrix() const {
         1  // fourth
     };
 
-    return QMatrix4x4(matrixData);
+    return Map4x4(matrixData);
 }
 
-QMatrix4x4 MyOpenGLWidget::GenerateRotateMatrixByAngle(RotateType rotateType,
-                                                       FloatType angle) {
-    const FloatType rotateOXData[] = {
+Mat4x4 MyOpenGLWidget::GenerateRotateMatrixByAngle(RotateType rotateType,
+                                                   FloatType angle) {
+    FloatType rotateOXData[] = {
         1.0f,
         0,
         0,
@@ -341,7 +289,7 @@ QMatrix4x4 MyOpenGLWidget::GenerateRotateMatrixByAngle(RotateType rotateType,
         1.0f  // fourth line
     };
 
-    const FloatType rotateOYData[] = {
+    FloatType rotateOYData[] = {
         std::cos(angle),
         0,
         -std::sin(angle),
@@ -360,7 +308,7 @@ QMatrix4x4 MyOpenGLWidget::GenerateRotateMatrixByAngle(RotateType rotateType,
         1.0f  // fourth line
     };
 
-    const FloatType rotateOZData[] = {
+    FloatType rotateOZData[] = {
         std::cos(angle),
         std::sin(angle),
         0,
@@ -379,7 +327,7 @@ QMatrix4x4 MyOpenGLWidget::GenerateRotateMatrixByAngle(RotateType rotateType,
         1.0f  // fourth line
     };
 
-    const FloatType* matrixData = nullptr;
+    FloatType* matrixData = nullptr;
     switch (rotateType) {
         case RotateType::OX:
             matrixData = rotateOXData;
@@ -392,17 +340,16 @@ QMatrix4x4 MyOpenGLWidget::GenerateRotateMatrixByAngle(RotateType rotateType,
             break;
     }
 
-    return QMatrix4x4(matrixData);
+    return Map4x4(matrixData);
 }
 
-QMatrix4x4 MyOpenGLWidget::GenerateProjectionMatrix(
-    ProjectionType projType,
-    ProjectionSurface projSurface,
-    IsometricProjType isoProjType) {
+Mat4x4 MyOpenGLWidget::GenerateProjectionMatrix(ProjectionType projType,
+                                                ProjectionSurface projSurface,
+                                                IsometricProjType isoProjType) {
     const auto X_COORD = 0;
     const auto Y_COORD = 1;
     const auto Z_COORD = 2;
-    const FloatType eMatrixData[] = {
+    FloatType eMatrixData[] = {
         1, 0, 0, 0,  // first line
         0, 1, 0, 0,  // second line
         0, 0, 1, 0,  // third line
@@ -412,7 +359,7 @@ QMatrix4x4 MyOpenGLWidget::GenerateProjectionMatrix(
     const auto PHI = std::asin(std::sqrt(2.0f) / 2);
     const auto TETA = std::asin(std::sqrt(1.0f / 3));
 
-    auto generateIsoProjMatrix = [](float phi, float teta) {
+    auto generateIsoProjMatrix = [](float phi, float teta) -> Mat4x4 {
         float isoProjMatrixData[] = {
             std::cos(phi),
             std::sin(phi) * std::sin(teta),
@@ -431,15 +378,15 @@ QMatrix4x4 MyOpenGLWidget::GenerateProjectionMatrix(
             0,
             1  // fourth line
         };
-        return QMatrix4x4(isoProjMatrixData);
+        return Map4x4(isoProjMatrixData);
     };
 
     float phi = 0;
     float teta = 0;
-    QMatrix4x4 projectionMatrix;
+    Mat4x4 projectionMatrix;
     switch (projType) {
         case ProjectionType::ORTHOGRAPHIC:
-            projectionMatrix = QMatrix4x4(eMatrixData);
+            projectionMatrix = Map4x4(eMatrixData);
             switch (projSurface) {
                 case ProjectionSurface::X:
                     projectionMatrix(X_COORD, X_COORD) = 0;
@@ -484,26 +431,25 @@ QMatrix4x4 MyOpenGLWidget::GenerateProjectionMatrix(
     return projectionMatrix;
 }
 
-QMatrix4x4 MyOpenGLWidget::GenerateMoveToXYMatrix(
-    ProjectionType projType,
-    ProjectionSurface projSurface,
-    IsometricProjType isoProjType) {
+Mat4x4 MyOpenGLWidget::GenerateMoveToXYMatrix(ProjectionType projType,
+                                              ProjectionSurface projSurface,
+                                              IsometricProjType isoProjType) {
     const auto PI = 4 * std::atan(1.0f);
-    const FloatType eData[] = {
+    FloatType eData[] = {
         1, 0, 0, 0,  // first line
         0, 1, 0, 0,  // second line
         0, 0, 1, 0,  // third line
         0, 0, 0, 1   // fourth line
     };
-    const QMatrix4x4 E(eData);
+    const Mat4x4 E = Map4x4(eData);
 
-    QMatrix4x4 moveToXYMatrix;
+    Mat4x4 moveToXYMatrix;
     switch (projType) {
         case ProjectionType::ORTHOGRAPHIC:
             switch (projSurface) {
                 case ProjectionSurface::X:
                     moveToXYMatrix =
-                        GenerateRotateMatrixByAngle(RotateType::OY, PI / 2);
+                        GenerateRotateMatrixByAngle(RotateType::OY, -PI / 2);
                     break;
                 case ProjectionSurface::Y:
                     moveToXYMatrix =
