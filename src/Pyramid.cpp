@@ -1,3 +1,8 @@
+// Computer graphic lab 2
+// Variant 20
+// Copyright © 2017-2018 Roman Khomenko (8O-308)
+// All rights reserved
+
 #include <Pyramid.hpp>
 
 #include <cmath>
